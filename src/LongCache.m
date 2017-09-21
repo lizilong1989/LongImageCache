@@ -6,7 +6,7 @@
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 
-#define kDefaultMaxCacheSize 128
+#define kDefaultMaxCacheSize 256
 
 #import "LongCache.h"
 
@@ -21,11 +21,24 @@
     pthread_mutex_t _mutex;
     
     dispatch_queue_t _cacheQueue;
+    
+    NSString *_diskCachePath;
 }
 
 @end
 
+static LongCache *instance = nil;
+
 @implementation LongCache
+
++ (instancetype)sharedInstance
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[LongCache alloc] init];
+    });
+    return instance;
+}
 
 - (instancetype)init
 {
@@ -35,7 +48,8 @@
         _dicRef = CFDictionaryCreateMutable(0, kDefaultMaxCacheSize, NULL, NULL);
         pthread_mutex_init(&_mutex, NULL);
         _cacheQueue = dispatch_queue_create("com.longcache.queue", DISPATCH_QUEUE_SERIAL);
-        dispatch_set_target_queue(_cacheQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0));
+        dispatch_set_target_queue(_cacheQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
+        _diskCachePath = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),kDefaultLongCachePath];
         
     }
     return self;
@@ -67,12 +81,10 @@
     }
     
     pthread_mutex_lock(&_mutex);
-    id obj = (__bridge id)CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
-    if (obj) {
+    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(aKey))) {
         [self _removeWithKey:aKey];
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(nil, aData.bytes, aData.length));
-        CFRelease((__bridge CFTypeRef)(obj));
+        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, aData.bytes, aData.length));
     } else {
         CFIndex count = CFDictionaryGetCount(_dicRef);
         if (count >= kDefaultMaxCacheSize) {
@@ -81,7 +93,7 @@
             CFDictionaryRemoveValue(_dicRef, key);
         }
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey),(__bridge CFTypeRef)aData);
+        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey),CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
         [self _saveCacheFromDiskWithData:aData forKey:aKey];
@@ -104,7 +116,9 @@
         return obj;
     }
     pthread_mutex_lock(&_mutex);
-    obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
+    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(aKey))) {
+        obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
+    }
     if (!obj) {
         obj = [self _getCacheFromDiskWithKey:aKey];
     }
@@ -126,12 +140,37 @@
     pthread_mutex_lock(&_mutex);
     CFArrayRemoveAllValues(_arrayRef);
     CFDictionaryRemoveAllValues(_dicRef);
-    NSString *path = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),kDefaultLongCachePath];
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    if ([fileManager fileExistsAtPath:path]) {
-        [fileManager removeItemAtPath:path error:nil];
+    if ([fileManager fileExistsAtPath:_diskCachePath]) {
+        [fileManager removeItemAtPath:_diskCachePath error:nil];
     }
     pthread_mutex_unlock(&_mutex);
+}
+
+- (NSUInteger)getDiskCount
+{
+    __block NSUInteger count = 0;
+    dispatch_sync(_cacheQueue, ^{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSDirectoryEnumerator *fileEnumerator = [fileManager enumeratorAtPath:_diskCachePath];
+        count = fileEnumerator.allObjects.count;
+    });
+    return count;
+}
+
+- (NSUInteger)getSize
+{
+    __block NSUInteger size = 0;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    dispatch_sync(_cacheQueue, ^{
+        NSDirectoryEnumerator *fileEnumerator = [fileManager enumeratorAtPath:_diskCachePath];
+        for (NSString *fileName in fileEnumerator) {
+            NSString *filePath = [_diskCachePath stringByAppendingPathComponent:fileName];
+            NSDictionary<NSString *, id> *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+            size += [attrs fileSize];
+        }
+    });
+    return size;
 }
 
 #pragma mark - private
@@ -155,16 +194,14 @@
     
     dispatch_async(_cacheQueue, ^{
         @autoreleasepool {
-            NSString *path = NSHomeDirectory();
-            path = [path stringByAppendingString:kDefaultLongCachePath];
             NSFileManager *fileManager = [NSFileManager defaultManager];
-            if (![fileManager fileExistsAtPath:path]) {
-                [fileManager createDirectoryAtPath:path
+            if (![fileManager fileExistsAtPath:_diskCachePath]) {
+                [fileManager createDirectoryAtPath:_diskCachePath
                        withIntermediateDirectories:YES
                                         attributes:nil
                                              error:nil];
             }
-            [aData writeToFile:[path stringByAppendingString:[self _cacheNameWithKey:aKey]]
+            [aData writeToFile:[_diskCachePath stringByAppendingString:[self _cacheNameWithKey:aKey]]
                     atomically:NO];
         }
     });
@@ -177,7 +214,7 @@
     }
     
     dispatch_async(_cacheQueue, ^{
-        NSString *path = [NSString stringWithFormat:@"%@%@%@",NSHomeDirectory(),kDefaultLongCachePath,[self _cacheNameWithKey:aKey]];
+        NSString *path = [NSString stringWithFormat:@"%@%@",_diskCachePath ,[self _cacheNameWithKey:aKey]];
         NSFileManager *fileManager = [NSFileManager defaultManager];
         if ([fileManager fileExistsAtPath:path]) {
             [fileManager removeItemAtPath:path error:nil];
@@ -192,7 +229,7 @@
         return ret;
     }
 
-    NSString *path = [NSString stringWithFormat:@"%@%@%@",NSHomeDirectory(), kDefaultLongCachePath,[self _cacheNameWithKey:aKey]];
+    NSString *path = [NSString stringWithFormat:@"%@%@",_diskCachePath ,[self _cacheNameWithKey:aKey]];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     if ([fileManager fileExistsAtPath:path]) {
         ret = [NSData dataWithContentsOfFile:path];

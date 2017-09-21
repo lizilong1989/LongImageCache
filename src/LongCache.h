@@ -11,6 +11,11 @@
 @interface LongCache : NSObject
 
 /*!
+ *  获取Cache实例
+ */
++ (instancetype)sharedInstance;
+
+/*!
  *  缓存数据
  *
  *  @param aData    缓存数据
@@ -52,5 +57,19 @@
  *  清除所有缓存数据
  */
 - (void)clearAllCache;
+
+/*!
+ *  获取缓存数据数
+ *
+ *  @result 缓存数据数
+ */
+- (NSUInteger)getDiskCount;
+
+/*!
+ *  获取缓存数据大小
+ *
+ *  @result 缓存数据大小
+ */
+- (NSUInteger)getSize;
 
 @end

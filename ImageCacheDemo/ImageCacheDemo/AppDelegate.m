@@ -12,7 +12,6 @@
 
 @interface AppDelegate ()
 {
-    LongCache *_cache;
     NSCache *_nscache;
 }
 
@@ -24,35 +23,35 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
-    _cache = [[LongCache alloc] init];
     _nscache = [[NSCache alloc] init];
     BOOL type = YES;
-    
-    for (int j = 0; j < 5; j ++) {
-        for (int i = 0; i < 1000; i ++) {
-            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        for (int j = 0; j < 5; j ++) {
+            for (int i = 0; i < 1000; i ++) {
+                
                 @autoreleasepool {
                     NSData *date = [[NSString stringWithFormat:@"%d",i] dataUsingEncoding:NSUTF8StringEncoding];
                     if (type) {
-                        [_cache storeCacheWithData:date
-                                            forKey:[NSString stringWithFormat:@"%d",i]
-                                            toDisk:YES];
+                        [[LongCache sharedInstance] storeCacheWithData:date
+                                                                forKey:[NSString stringWithFormat:@"%d",i]
+                                                                toDisk:YES];
                     } else {
                         [_nscache setObject:date forKey:[NSString stringWithFormat:@"%d",i]];
                     }
                 }
-            });
+                
+            }
         }
-    }
+   });
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
         for (int i = 0; i < 1000; i ++) {
             dispatch_async(dispatch_get_global_queue(0, 0), ^{
                 @autoreleasepool {
                     NSData *date = nil;
                     if (type) {
-                        date = (NSData*)[_cache getCacheWithKey:[NSString stringWithFormat:@"%d",i]];
+                        date = (NSData*)[[LongCache sharedInstance] getCacheWithKey:[NSString stringWithFormat:@"%d",i]];
                     } else {
                         date = (NSData*)[_nscache objectForKey:[NSString stringWithFormat:@"%d",i]];
                     }
@@ -61,7 +60,8 @@
                         NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
                         NSLog(@"time - %f", endTime - startTime);
                         if (type) {
-                            [_cache clearAllCache];
+                            NSLog(@"size %ld", [[LongCache sharedInstance] getSize]);
+                            NSLog(@"count %ld", [[LongCache sharedInstance] getDiskCount]);
                         } else {
                             [_nscache removeAllObjects];
                         }
