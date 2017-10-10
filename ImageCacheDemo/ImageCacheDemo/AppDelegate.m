@@ -2,13 +2,15 @@
 //  AppDelegate.m
 //  ImageCacheDemo
 //
-//  Created by EaseMob on 2017/9/5.
+//  Created by zilong.li on 2017/9/5.
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 
 #import "AppDelegate.h"
 
 #import "LongCache.h"
+
+#import "TableViewController.h"
 
 @interface AppDelegate ()
 {
@@ -23,6 +25,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
+
     _nscache = [[NSCache alloc] init];
     BOOL type = YES;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -39,7 +42,7 @@
                         [_nscache setObject:date forKey:[NSString stringWithFormat:@"%d",i]];
                     }
                 }
-                
+            
             }
         }
    });
@@ -55,21 +58,28 @@
                     } else {
                         date = (NSData*)[_nscache objectForKey:[NSString stringWithFormat:@"%d",i]];
                     }
-                    NSLog(@"%@",[[NSString alloc] initWithData:date encoding:NSUTF8StringEncoding]);
-                    if (i == 999) {
-                        NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
-                        NSLog(@"time - %f", endTime - startTime);
-                        if (type) {
-                            NSLog(@"size %ld", [[LongCache sharedInstance] getSize]);
-                            NSLog(@"count %ld", [[LongCache sharedInstance] getDiskCount]);
-                        } else {
-                            [_nscache removeAllObjects];
+                    if ([date isKindOfClass:[NSData class]]) {
+                        NSLog(@"%@",[[NSString alloc] initWithData:date encoding:NSUTF8StringEncoding]);
+                        if (i == 999) {
+                            NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
+                            NSLog(@"time - %f", endTime - startTime);
+                            if (type) {
+                                NSLog(@"size %ld", [[LongCache sharedInstance] getSize]);
+                                NSLog(@"count %ld", [[LongCache sharedInstance] getDiskCount]);
+                            } else {
+                                [_nscache removeAllObjects];
+                            }
                         }
                     }
                 }
             });
         }
     });
+    
+    TableViewController *table = [[TableViewController alloc] init];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:table];
+    self.window.rootViewController = nav;
+    [self.window makeKeyAndVisible];
     
     return YES;
 }

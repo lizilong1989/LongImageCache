@@ -1,0 +1,14 @@
+platform :ios, '8.0'
+
+# Import CocoaPods sources
+source 'https://github.com/CocoaPods/Specs.git'
+
+target 'ImageCacheDemo' do
+
+#	pod 'LongDispatch', :path => '../../LongDispatch'
+    pod 'LongDispatch', :git => 'https://github.com/lizilong1989/LongDispatch.git'
+
+#	pod 'LongRequest', :path => '../../LongRequest'
+    pod 'LongRequest', :git => 'https://github.com/lizilong1989/LongRequest.git'
+
+end

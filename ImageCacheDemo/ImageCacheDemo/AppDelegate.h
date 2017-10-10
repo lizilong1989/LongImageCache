@@ -2,7 +2,7 @@
 //  AppDelegate.h
 //  ImageCacheDemo
 //
-//  Created by EaseMob on 2017/9/5.
+//  Created by zilong.li on 2017/9/5.
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 

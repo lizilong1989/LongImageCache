@@ -2,13 +2,15 @@
 //  LongCache.m
 //  ImageCacheDemo
 //
-//  Created by EaseMob on 2017/9/5.
+//  Created by zilong.li on 2017/9/5.
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 
 #define kDefaultMaxCacheSize 256
 
 #import "LongCache.h"
+
+#import "NSString+LongMD5.h"
 
 #import <pthread.h>
 
@@ -81,10 +83,13 @@ static LongCache *instance = nil;
     }
     
     pthread_mutex_lock(&_mutex);
-    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(aKey))) {
-        [self _removeWithKey:aKey];
-        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, aData.bytes, aData.length));
+    
+    NSString *md5Key = [aKey md5String];
+    
+    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(md5Key))) {
+        [self _removeWithKey:md5Key];
+        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(md5Key));
+        CFDictionarySetValue(_dicRef, (__bridge const void *)(md5Key), CFDataCreate(0, aData.bytes, aData.length));
     } else {
         CFIndex count = CFDictionaryGetCount(_dicRef);
         if (count >= kDefaultMaxCacheSize) {
@@ -92,11 +97,11 @@ static LongCache *instance = nil;
             CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
             CFDictionaryRemoveValue(_dicRef, key);
         }
-        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-        CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey),CFDataCreate(0, aData.bytes, aData.length));
+        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(md5Key));
+        CFDictionarySetValue(_dicRef, (__bridge const void *)(md5Key),CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
-        [self _saveCacheFromDiskWithData:aData forKey:aKey];
+        [self _saveCacheFromDiskWithData:aData forKey:md5Key];
     }
     pthread_mutex_unlock(&_mutex);
 }
@@ -116,11 +121,14 @@ static LongCache *instance = nil;
         return obj;
     }
     pthread_mutex_lock(&_mutex);
-    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(aKey))) {
-        obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
+    
+    NSString *md5Key = [aKey md5String];
+    
+    if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)(md5Key))) {
+        obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)(md5Key));
     }
     if (!obj) {
-        obj = [self _getCacheFromDiskWithKey:aKey];
+        obj = [self _getCacheFromDiskWithKey:md5Key];
     }
     pthread_mutex_unlock(&_mutex);
     return obj;
@@ -129,9 +137,10 @@ static LongCache *instance = nil;
 - (void)clearCacheWithKey:(NSString *)aKey
 {
     pthread_mutex_lock(&_mutex);
-    [self _removeWithKey:aKey];
-    [self _removeCacheFromDiskWithKey:aKey];
-    CFDictionaryRemoveValue(_dicRef, (__bridge const void *)(aKey));
+    NSString *md5Key = [aKey md5String];
+    [self _removeWithKey:md5Key];
+    [self _removeCacheFromDiskWithKey:md5Key];
+    CFDictionaryRemoveValue(_dicRef, (__bridge const void *)(md5Key));
     pthread_mutex_unlock(&_mutex);
 }
 
@@ -193,17 +202,15 @@ static LongCache *instance = nil;
     }
     
     dispatch_async(_cacheQueue, ^{
-        @autoreleasepool {
-            NSFileManager *fileManager = [NSFileManager defaultManager];
-            if (![fileManager fileExistsAtPath:_diskCachePath]) {
-                [fileManager createDirectoryAtPath:_diskCachePath
-                       withIntermediateDirectories:YES
-                                        attributes:nil
-                                             error:nil];
-            }
-            [aData writeToFile:[_diskCachePath stringByAppendingString:[self _cacheNameWithKey:aKey]]
-                    atomically:NO];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        if (![fileManager fileExistsAtPath:_diskCachePath]) {
+            [fileManager createDirectoryAtPath:_diskCachePath
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:nil];
         }
+        [aData writeToFile:[_diskCachePath stringByAppendingString:[self _cacheNameWithKey:aKey]]
+                atomically:NO];
     });
 }
 
@@ -241,7 +248,7 @@ static LongCache *instance = nil;
                 CFDictionaryRemoveValue(_dicRef, key);
             }
             CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-            CFDictionaryAddValue(_dicRef, (__bridge const void *)(aKey), (__bridge CFTypeRef)ret);
+            CFDictionaryAddValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, ret.bytes, ret.length));
         }
     }
     return ret;
