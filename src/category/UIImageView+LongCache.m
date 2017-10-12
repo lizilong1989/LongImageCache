@@ -10,44 +10,14 @@
 
 #import <objc/runtime.h>
 
-#import "LongCache.h"
+#import "LongImageCache.h"
 #import "LongCacheDownloadTask.h"
+#import "UIImage+LongGif.h"
 
 static const void *LongCacheKey = &LongCacheKey;
 static const void *LongCacheLoadingKey = &LongCacheLoadingKey;
 
-@interface UIImageView (LongCache)
-
-@property (nonatomic, copy) NSString *lastUrl;
-
-@property (nonatomic, assign, getter=isLoading) BOOL loading;
-
-@end
-
 @implementation UIImageView (LongCache)
-
-@dynamic lastUrl;
-@dynamic loading;
-
-- (void)setLastUrl:(NSString*)lastUrl
-{
-    objc_setAssociatedObject(self, LongCacheKey, lastUrl, OBJC_ASSOCIATION_COPY_NONATOMIC);
-}
-
-- (NSString*)getLastUrl
-{
-    return objc_getAssociatedObject(self, LongCacheKey);
-}
-
-- (void)setLoading:(BOOL)loading
-{
-    objc_setAssociatedObject(self, LongCacheLoadingKey, @(loading), OBJC_ASSOCIATION_ASSIGN);
-}
-
-- (BOOL)isLoading
-{
-    return objc_getAssociatedObject(self, LongCacheLoadingKey);
-}
 
 - (void)setImageWithUrl:(NSString*)aUrl
 {
@@ -64,35 +34,44 @@ static const void *LongCacheLoadingKey = &LongCacheLoadingKey;
        placeholderImage:(UIImage*)aImage
                  toDisk:(BOOL)aToDisk
 {
-    NSString *lastUrl = [self getLastUrl];
-    if (lastUrl.length > 0 && ![lastUrl isEqualToString:aUrl]) {
-        [self setLastUrl:aUrl];
-        if (self.loading) {
-            [[LongCacheDownloadTask sharedInstance] cancelDownloadTaskWithUrl:aUrl];
-        }
-    }
-    NSData *cacheData = [[LongCache sharedInstance] getCacheWithKey:aUrl];
-    if (cacheData) {
-        self.image = [UIImage imageWithData:cacheData];
+    [self setImageWithImage:aImage data:nil];
+    [[LongCacheDownloadTask sharedInstance] cancelDownloadTaskWithUrl:aUrl];
+    
+    UIImage *image = [[LongImageCache sharedInstance] getImageFromCacheWithKey:aUrl];
+    if (image) {
+        [self setImageWithImage:image data:nil];
         return;
     }
     __weak typeof(self) weakSelf = self;
     __block NSString *_blockUrl = aUrl;
-    self.loading = YES;
     [[LongCacheDownloadTask sharedInstance] downloadWithUrl:aUrl
                                                  completion:^(NSData *aData, NSError *aError) {
                                                      if (!aError) {
-                                                         dispatch_async(dispatch_get_main_queue(), ^{
-                                                             weakSelf.image = [UIImage imageWithData:aData];
-                                                         });
-                                                         if (aToDisk) {
-                                                             [[LongCache sharedInstance] storeCacheWithData:aData
-                                                                                                     forKey:_blockUrl
-                                                                                                     toDisk:YES];
-                                                         }
+                                                         [weakSelf setImageWithImage:nil data:aData];
+                                                         [[LongImageCache sharedInstance] setCacheWithData:aData key:_blockUrl toDisk:aToDisk];
                                                      }
-                                                     weakSelf.loading = NO;
                                                  }];
+}
+
+- (void)setImageWithImage:(UIImage*)image data:(NSData*)aData
+{
+    __weak typeof(self) weakSelf = self;
+    dispatch_block_t block = ^{
+        if (image) {
+            weakSelf.image = image;
+        }
+        
+        if (aData) {
+            weakSelf.image = [UIImage imageWithData:aData];
+        }
+        
+        [weakSelf setNeedsLayout];
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
 }
 
 @end

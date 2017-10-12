@@ -91,7 +91,7 @@ static LongCache *instance = nil;
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(md5Key));
         CFDictionarySetValue(_dicRef, (__bridge const void *)(md5Key), CFDataCreate(0, aData.bytes, aData.length));
     } else {
-        CFIndex count = CFDictionaryGetCount(_dicRef);
+        CFIndex count = CFArrayGetCount(_arrayRef);
         if (count >= kDefaultMaxCacheSize) {
             const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
             CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
@@ -241,14 +241,14 @@ static LongCache *instance = nil;
     if ([fileManager fileExistsAtPath:path]) {
         ret = [NSData dataWithContentsOfFile:path];
         if (ret) {
-            CFIndex count = CFDictionaryGetCount(_dicRef);
+            CFIndex count = CFArrayGetCount(_arrayRef);
             if (count >= kDefaultMaxCacheSize) {
                 const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
                 CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
                 CFDictionaryRemoveValue(_dicRef, key);
             }
             CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
-            CFDictionaryAddValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, ret.bytes, ret.length));
+            CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, ret.bytes, ret.length));
         }
     }
     return ret;

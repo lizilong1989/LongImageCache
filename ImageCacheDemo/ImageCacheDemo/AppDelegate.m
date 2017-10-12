@@ -26,6 +26,7 @@
     // Override point for customization after application launch.
     
 
+    /*
     _nscache = [[NSCache alloc] init];
     BOOL type = YES;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -74,7 +75,7 @@
                 }
             });
         }
-    });
+    });*/
     
     TableViewController *table = [[TableViewController alloc] init];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:table];
