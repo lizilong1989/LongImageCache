@@ -9,6 +9,7 @@
 #import "LongImageCache.h"
 
 #import "LongCache.h"
+#import "NSString+LongMD5.h"
 #import "UIImage+LongGif.h"
 
 static LongImageCache *instance = nil;
@@ -46,7 +47,7 @@ static LongImageCache *instance = nil;
 {
     if (aKey.length > 0 && aData.length > 0) {
         UIImage *image = [UIImage imageWithData:aData];
-        [_imageDic setObject:image forKey:aKey];
+        [_imageDic setObject:image forKey:[aKey md5String]];
         
         [[LongCache sharedInstance] storeCacheWithData:aData
                                                 forKey:aKey
@@ -59,12 +60,12 @@ static LongImageCache *instance = nil;
     if (aKey.length == 0) {
         return nil;
     }
-    UIImage *image = [_imageDic objectForKey:aKey];
+    UIImage *image = [_imageDic objectForKey:[aKey md5String]];
     if (image == nil) {
         NSData *cacheData = [[LongCache sharedInstance] getCacheWithKey:aKey];
         if (cacheData) {
             image = [UIImage imageWithData:cacheData];
-            [_imageDic setObject:image forKey:aKey];
+            [_imageDic setObject:image forKey:[aKey md5String]];
         }
     }
     return image;

@@ -15,6 +15,7 @@
 - (void)cancelDownloadTaskWithUrl:(NSString*)aUrl;
 
 - (void)downloadWithUrl:(NSString*)aUrl
+               progress:(void (^)(int progress))aProgressBlock
              completion:(void (^)(NSData *aData, NSError *aError))aCompletionBlock;
 
 @end

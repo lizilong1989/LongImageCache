@@ -42,14 +42,18 @@ static LongCacheDownloadTask *task = nil;
 
 - (void)cancelDownloadTaskWithUrl:(NSString *)aUrl
 {
-    [[LongRequestManager sharedInstance] cancelRequestWithUrl:aUrl];
+    dispatch_block_t block = ^{
+        [[LongRequestManager sharedInstance] cancelRequestWithUrl:aUrl];
+    };
+    [_longDispatch addTask:block];
 }
 
 - (void)downloadWithUrl:(NSString*)aUrl
+               progress:(void (^)(int progress))aProgressBlock
              completion:(void (^)(NSData *aData, NSError *aError))aCompletionBlock
 {
     dispatch_block_t block = ^{
-        [[LongRequestManager sharedInstance] downloadWithUrl:aUrl progress:NULL completion:aCompletionBlock];
+        [[LongRequestManager sharedInstance] downloadWithUrl:aUrl progress:aProgressBlock completion:aCompletionBlock];
     };
     [_longDispatch addTask:block];
 }
