@@ -12,4 +12,6 @@ Pod::Spec.new do |spec|
   spec.requires_arc = true
   spec.frameworks   = 'Security'
   spec.xcconfig     = {'OTHER_LDFLAGS' => '-ObjC'}
+  spec.dependency   'LongDispatch', '~> 1.0.1'
+  spec.dependency   'LongRequest', '~> 1.0.0'
 end
