@@ -11,6 +11,7 @@
 #import "LongCache.h"
 #import "NSString+LongMD5.h"
 #import "LongGifImage.h"
+#import "LongWebPImage.h"
 
 #import <pthread.h>
 #import <ImageIO/ImageIO.h>
@@ -57,12 +58,19 @@ static LongImageCache *instance = nil;
                   toDisk:(BOOL)aToDisk
 {
     if (aKey.length > 0 && aData.length > 0) {
-        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
         UIImage *image = nil;
         
-        if (CGImageSourceContainsAnimatedGif(imageSource)) {
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
+        NSString *imageContentType = [LongImageCache contentTypeForImageData:aData];
+        if ([imageContentType isEqualToString:@"image/gif"] || [LongImageCache CGImageSourceContainsAnimatedGif:imageSource]) {
             image = [[LongGifImage alloc] initWithCGImageSource:imageSource scale:1.0f];
-        } else {
+        }
+#ifdef LONG_WEBP
+        else if ([imageContentType isEqualToString:@"image/webp"]) {
+            image = [[LongWebPImage alloc] initWithData:aData];
+        }
+#endif
+        else {
             image = [UIImage imageWithData:aData];
         }
         [self _setImage:image key:aKey];
@@ -87,9 +95,16 @@ static LongImageCache *instance = nil;
         NSData *cacheData = [[LongCache sharedInstance] getCacheWithKey:aKey];
         if (cacheData) {
             CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(cacheData), NULL);
-            if (CGImageSourceContainsAnimatedGif(imageSource)) {
+            NSString *imageContentType = [LongImageCache contentTypeForImageData:cacheData];
+            if ([imageContentType isEqualToString:@"image/gif"] || [LongImageCache CGImageSourceContainsAnimatedGif:imageSource]) {
                 image = [[LongGifImage alloc] initWithCGImageSource:imageSource scale:1.0f];
-            } else {
+            }
+#ifdef LONG_WEBP
+            else if ([imageContentType isEqualToString:@"image/webp"]) {
+                image = [[LongWebPImage alloc] initWithData:cacheData];
+            }
+#endif
+            else {
                 image = [UIImage imageWithData:cacheData];
             }
             [self _setImage:image key:aKey];
@@ -140,9 +155,38 @@ static LongImageCache *instance = nil;
     return image;
 }
 
-static bool CGImageSourceContainsAnimatedGif(CGImageSourceRef imageSource)
++ (BOOL)CGImageSourceContainsAnimatedGif:(CGImageSourceRef)imageSource
 {
     return imageSource && UTTypeConformsTo(CGImageSourceGetType(imageSource), kUTTypeGIF) && CGImageSourceGetCount(imageSource) > 1;
+}
+
++ (NSString *)contentTypeForImageData:(NSData *)data {
+    uint8_t c;
+    [data getBytes:&c length:1];
+    switch (c) {
+        case 0xFF:
+            return @"image/jpeg";
+        case 0x89:
+            return @"image/png";
+        case 0x47:
+            return @"image/gif";
+        case 0x49:
+        case 0x4D:
+            return @"image/tiff";
+        case 0x52:
+            // R as RIFF for WEBP
+            if ([data length] < 12) {
+                return nil;
+            }
+            
+            NSString *testString = [[NSString alloc] initWithData:[data subdataWithRange:NSMakeRange(0, 12)] encoding:NSASCIIStringEncoding];
+            if ([testString hasPrefix:@"RIFF"] && [testString hasSuffix:@"WEBP"]) {
+                return @"image/webp";
+            }
+            
+            return nil;
+    }
+    return nil;
 }
 
 @end

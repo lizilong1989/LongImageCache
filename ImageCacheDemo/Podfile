@@ -4,6 +4,10 @@ platform :ios, '8.0'
 source 'https://github.com/CocoaPods/Specs.git'
 
 target 'ImageCacheDemo' do
+    
+    pod 'LongImageCache', :path => '../'
+    
+#   pod 'LongImageCache/WebP', :path => '../'
 
 #	pod 'LongDispatch', :path => '../../LongDispatch'
     pod 'LongDispatch', :git => 'https://github.com/lizilong1989/LongDispatch.git'

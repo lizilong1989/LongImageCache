@@ -11,8 +11,6 @@
 #import "LongCache.h"
 #import "UIImageView+LongCache.h"
 
-#import <SDWebImage/UIImageView+WebCache.h>
-
 @interface TableViewController ()
 {
     NSArray *_datasource;
