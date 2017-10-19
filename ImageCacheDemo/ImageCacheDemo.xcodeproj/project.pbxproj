@@ -13,14 +13,15 @@
 		D2111D191F5E887700196E11 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D2111D171F5E887700196E11 /* Main.storyboard */; };
 		D2111D1B1F5E887700196E11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2111D1A1F5E887700196E11 /* Assets.xcassets */; };
 		D2111D1E1F5E887700196E11 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D2111D1C1F5E887700196E11 /* LaunchScreen.storyboard */; };
-		D2111D281F5E88CF00196E11 /* LongCache.m in Sources */ = {isa = PBXBuildFile; fileRef = D2111D271F5E88CF00196E11 /* LongCache.m */; };
-		D293A0481F8F471A00B954DD /* LongImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = D293A0471F8F471A00B954DD /* LongImageCache.m */; };
-		D293A04B1F8F4B6D00B954DD /* UIImage+LongGif.m in Sources */ = {isa = PBXBuildFile; fileRef = D293A04A1F8F4B6D00B954DD /* UIImage+LongGif.m */; };
 		D293A04E1F8F687800B954DD /* imageDownloadFail.png in Resources */ = {isa = PBXBuildFile; fileRef = D293A04D1F8F687700B954DD /* imageDownloadFail.png */; };
 		D2CB83091F74F49F005FD8F1 /* UIImageView+LongCache.m in Sources */ = {isa = PBXBuildFile; fileRef = D2CB83081F74F49F005FD8F1 /* UIImageView+LongCache.m */; };
 		D2CB830C1F74F85F005FD8F1 /* TableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D2CB830B1F74F85F005FD8F1 /* TableViewController.m */; };
-		D2F033071F75007D0029795E /* LongCacheDownloadTask.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F033061F75007D0029795E /* LongCacheDownloadTask.m */; };
 		D2F5EFA91F8CB5C400B1F5DB /* NSString+LongMD5.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F5EFA81F8CB5C400B1F5DB /* NSString+LongMD5.m */; };
+		D2F735491F9867AE00974D47 /* icon_002.gif in Resources */ = {isa = PBXBuildFile; fileRef = D2F735481F9867AE00974D47 /* icon_002.gif */; };
+		D2F735501F98905200974D47 /* LongCacheDownloadTask.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F7354F1F98905200974D47 /* LongCacheDownloadTask.m */; };
+		D2F735561F9890C700974D47 /* LongImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F735521F9890C600974D47 /* LongImageCache.m */; };
+		D2F735571F9890C700974D47 /* LongCache.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F735541F9890C600974D47 /* LongCache.m */; };
+		D2F7355B1F98912800974D47 /* LongGifImage.m in Sources */ = {isa = PBXBuildFile; fileRef = D2F7355A1F98912800974D47 /* LongGifImage.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,21 +35,22 @@
 		D2111D1A1F5E887700196E11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D2111D1D1F5E887700196E11 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D2111D1F1F5E887700196E11 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		D2111D261F5E88CF00196E11 /* LongCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LongCache.h; sourceTree = "<group>"; };
-		D2111D271F5E88CF00196E11 /* LongCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LongCache.m; sourceTree = "<group>"; };
-		D293A0461F8F471A00B954DD /* LongImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LongImageCache.h; sourceTree = "<group>"; };
-		D293A0471F8F471A00B954DD /* LongImageCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LongImageCache.m; sourceTree = "<group>"; };
-		D293A0491F8F4B6D00B954DD /* UIImage+LongGif.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIImage+LongGif.h"; sourceTree = "<group>"; };
-		D293A04A1F8F4B6D00B954DD /* UIImage+LongGif.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImage+LongGif.m"; sourceTree = "<group>"; };
 		D293A04D1F8F687700B954DD /* imageDownloadFail.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = imageDownloadFail.png; sourceTree = "<group>"; };
 		D2CB83071F74F49F005FD8F1 /* UIImageView+LongCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIImageView+LongCache.h"; sourceTree = "<group>"; };
 		D2CB83081F74F49F005FD8F1 /* UIImageView+LongCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImageView+LongCache.m"; sourceTree = "<group>"; };
 		D2CB830A1F74F85F005FD8F1 /* TableViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TableViewController.h; sourceTree = "<group>"; };
 		D2CB830B1F74F85F005FD8F1 /* TableViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TableViewController.m; sourceTree = "<group>"; };
-		D2F033051F75007D0029795E /* LongCacheDownloadTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LongCacheDownloadTask.h; sourceTree = "<group>"; };
-		D2F033061F75007D0029795E /* LongCacheDownloadTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LongCacheDownloadTask.m; sourceTree = "<group>"; };
 		D2F5EFA71F8CB5C400B1F5DB /* NSString+LongMD5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSString+LongMD5.h"; sourceTree = "<group>"; };
 		D2F5EFA81F8CB5C400B1F5DB /* NSString+LongMD5.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSString+LongMD5.m"; sourceTree = "<group>"; };
+		D2F735481F9867AE00974D47 /* icon_002.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = icon_002.gif; sourceTree = "<group>"; };
+		D2F7354E1F98905200974D47 /* LongCacheDownloadTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LongCacheDownloadTask.h; sourceTree = "<group>"; };
+		D2F7354F1F98905200974D47 /* LongCacheDownloadTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LongCacheDownloadTask.m; sourceTree = "<group>"; };
+		D2F735521F9890C600974D47 /* LongImageCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LongImageCache.m; sourceTree = "<group>"; };
+		D2F735531F9890C600974D47 /* LongCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LongCache.h; sourceTree = "<group>"; };
+		D2F735541F9890C600974D47 /* LongCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LongCache.m; sourceTree = "<group>"; };
+		D2F735551F9890C700974D47 /* LongImageCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LongImageCache.h; sourceTree = "<group>"; };
+		D2F735591F98912800974D47 /* LongGifImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LongGifImage.h; sourceTree = "<group>"; };
+		D2F7355A1F98912800974D47 /* LongGifImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LongGifImage.m; sourceTree = "<group>"; };
 		F5048FEED57B5403F507EC4B /* Pods-ImageCacheDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ImageCacheDemo.release.xcconfig"; path = "Pods/Target Support Files/Pods-ImageCacheDemo/Pods-ImageCacheDemo.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -112,12 +114,9 @@
 			isa = PBXGroup;
 			children = (
 				D2CB83061F74F476005FD8F1 /* category */,
-				D2111D261F5E88CF00196E11 /* LongCache.h */,
-				D2111D271F5E88CF00196E11 /* LongCache.m */,
-				D293A0461F8F471A00B954DD /* LongImageCache.h */,
-				D293A0471F8F471A00B954DD /* LongImageCache.m */,
-				D2F033051F75007D0029795E /* LongCacheDownloadTask.h */,
-				D2F033061F75007D0029795E /* LongCacheDownloadTask.m */,
+				D2F735511F9890B400974D47 /* core */,
+				D2F735581F98912800974D47 /* module */,
+				D2F7354D1F98903B00974D47 /* util */,
 			);
 			name = src;
 			path = ../src;
@@ -126,6 +125,7 @@
 		D293A04C1F8F687700B954DD /* resource */ = {
 			isa = PBXGroup;
 			children = (
+				D2F735481F9867AE00974D47 /* icon_002.gif */,
 				D293A04D1F8F687700B954DD /* imageDownloadFail.png */,
 			);
 			name = resource;
@@ -139,10 +139,37 @@
 				D2CB83081F74F49F005FD8F1 /* UIImageView+LongCache.m */,
 				D2F5EFA71F8CB5C400B1F5DB /* NSString+LongMD5.h */,
 				D2F5EFA81F8CB5C400B1F5DB /* NSString+LongMD5.m */,
-				D293A0491F8F4B6D00B954DD /* UIImage+LongGif.h */,
-				D293A04A1F8F4B6D00B954DD /* UIImage+LongGif.m */,
 			);
 			path = category;
+			sourceTree = "<group>";
+		};
+		D2F7354D1F98903B00974D47 /* util */ = {
+			isa = PBXGroup;
+			children = (
+				D2F7354E1F98905200974D47 /* LongCacheDownloadTask.h */,
+				D2F7354F1F98905200974D47 /* LongCacheDownloadTask.m */,
+			);
+			path = util;
+			sourceTree = "<group>";
+		};
+		D2F735511F9890B400974D47 /* core */ = {
+			isa = PBXGroup;
+			children = (
+				D2F735531F9890C600974D47 /* LongCache.h */,
+				D2F735541F9890C600974D47 /* LongCache.m */,
+				D2F735551F9890C700974D47 /* LongImageCache.h */,
+				D2F735521F9890C600974D47 /* LongImageCache.m */,
+			);
+			path = core;
+			sourceTree = "<group>";
+		};
+		D2F735581F98912800974D47 /* module */ = {
+			isa = PBXGroup;
+			children = (
+				D2F735591F98912800974D47 /* LongGifImage.h */,
+				D2F7355A1F98912800974D47 /* LongGifImage.m */,
+			);
+			path = module;
 			sourceTree = "<group>";
 		};
 		E3051DB0DE2F012762AF338F /* Pods */ = {
@@ -226,6 +253,7 @@
 			files = (
 				D293A04E1F8F687800B954DD /* imageDownloadFail.png in Resources */,
 				D2111D1E1F5E887700196E11 /* LaunchScreen.storyboard in Resources */,
+				D2F735491F9867AE00974D47 /* icon_002.gif in Resources */,
 				D2111D1B1F5E887700196E11 /* Assets.xcassets in Resources */,
 				D2111D191F5E887700196E11 /* Main.storyboard in Resources */,
 			);
@@ -286,15 +314,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D2F735501F98905200974D47 /* LongCacheDownloadTask.m in Sources */,
 				D2CB830C1F74F85F005FD8F1 /* TableViewController.m in Sources */,
+				D2F735561F9890C700974D47 /* LongImageCache.m in Sources */,
 				D2111D131F5E887700196E11 /* AppDelegate.m in Sources */,
-				D2111D281F5E88CF00196E11 /* LongCache.m in Sources */,
 				D2111D101F5E887700196E11 /* main.m in Sources */,
+				D2F7355B1F98912800974D47 /* LongGifImage.m in Sources */,
 				D2CB83091F74F49F005FD8F1 /* UIImageView+LongCache.m in Sources */,
+				D2F735571F9890C700974D47 /* LongCache.m in Sources */,
 				D2F5EFA91F8CB5C400B1F5DB /* NSString+LongMD5.m in Sources */,
-				D293A0481F8F471A00B954DD /* LongImageCache.m in Sources */,
-				D293A04B1F8F4B6D00B954DD /* UIImage+LongGif.m in Sources */,
-				D2F033071F75007D0029795E /* LongCacheDownloadTask.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

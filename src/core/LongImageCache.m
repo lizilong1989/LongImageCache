@@ -10,9 +10,11 @@
 
 #import "LongCache.h"
 #import "NSString+LongMD5.h"
-#import "UIImage+LongGif.h"
+#import "LongGifImage.h"
 
 #import <pthread.h>
+#import <ImageIO/ImageIO.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 #define kLongDefaultSize 32
 
@@ -55,12 +57,23 @@ static LongImageCache *instance = nil;
                   toDisk:(BOOL)aToDisk
 {
     if (aKey.length > 0 && aData.length > 0) {
-        UIImage *image = [UIImage imageWithData:aData];
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
+        UIImage *image = nil;
+        
+        if (CGImageSourceContainsAnimatedGif(imageSource)) {
+            image = [[LongGifImage alloc] initWithCGImageSource:imageSource scale:1.0f];
+        } else {
+            image = [UIImage imageWithData:aData];
+        }
         [self _setImage:image key:aKey];
         
         [[LongCache sharedInstance] storeCacheWithData:aData
                                                 forKey:aKey
                                                 toDisk:aToDisk];
+        
+        if (imageSource) {
+            CFRelease(imageSource);
+        }
     }
 }
 
@@ -73,8 +86,17 @@ static LongImageCache *instance = nil;
     if (image == nil) {
         NSData *cacheData = [[LongCache sharedInstance] getCacheWithKey:aKey];
         if (cacheData) {
-            image = [UIImage imageWithData:cacheData];
+            CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(cacheData), NULL);
+            if (CGImageSourceContainsAnimatedGif(imageSource)) {
+                image = [[LongGifImage alloc] initWithCGImageSource:imageSource scale:1.0f];
+            } else {
+                image = [UIImage imageWithData:cacheData];
+            }
             [self _setImage:image key:aKey];
+            
+            if (imageSource) {
+                CFRelease(imageSource);
+            }
         }
     }
     return image;
@@ -88,6 +110,9 @@ static LongImageCache *instance = nil;
 #pragma mark - private
 - (void)_setImage:(UIImage*)aImage key:(NSString*)aKey
 {
+    if (aImage == nil || aKey.length == 0) {
+        return;
+    }
     pthread_mutex_lock(&_mutex);
     if ([_imageArray count] > kLongDefaultSize) {
         NSString *key = [_imageArray lastObject];
@@ -113,6 +138,11 @@ static LongImageCache *instance = nil;
     UIImage *image = [_imageDic objectForKey:[aKey md5String]];
     pthread_mutex_unlock(&_mutex);
     return image;
+}
+
+static bool CGImageSourceContainsAnimatedGif(CGImageSourceRef imageSource)
+{
+    return imageSource && UTTypeConformsTo(CGImageSourceGetType(imageSource), kUTTypeGIF) && CGImageSourceGetCount(imageSource) > 1;
 }
 
 @end

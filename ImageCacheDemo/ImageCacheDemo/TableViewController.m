@@ -71,7 +71,6 @@
     NSString *url = [_datasource objectAtIndex:indexPath.row];
     UIImage *image = [UIImage imageNamed:@"imageDownloadFail"];
     [cell.imageView setImageWithUrl:url placeholderImage:image toDisk:NO showActivityView:YES];
-//    [cell.imageView sd_setImageWithURL:[NSURL URLWithString:url] placeholderImage:image];
     cell.imageView.contentMode = UIViewContentModeScaleAspectFit;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;

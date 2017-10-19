@@ -12,7 +12,6 @@
 
 #import "LongImageCache.h"
 #import "LongCacheDownloadTask.h"
-#import "UIImage+LongGif.h"
 
 static const void *LongCacheKey = &LongCacheKey;
 static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
