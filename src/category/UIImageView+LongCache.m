@@ -260,16 +260,17 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
             if ([image.images count] > 0) {
                 weakSelf.image = [image.images objectAtIndex:0];
                 NSData *gifData = [[LongCache sharedInstance] getCacheWithKey:weakSelf.urlKey];
-                [weakSelf setLongGifData:gifData];
-                dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                    [[LongGifManager shared].gifViewHashTable addObject:weakSelf];
-                });
-                
-                if (![LongGifManager shared].displayLink) {
-                    [LongGifManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[LongGifManager shared] selector:@selector(play)];
-                    [[LongGifManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+                if (gifData.length > 0 ) {
+                    [weakSelf setLongGifData:gifData];
+                    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                        [[LongGifManager shared].gifViewHashTable addObject:weakSelf];
+                    });
+                    
+                    if (![LongGifManager shared].displayLink) {
+                        [LongGifManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[LongGifManager shared] selector:@selector(play)];
+                        [[LongGifManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+                    }
                 }
-                
             } else {
                 [[LongGifManager shared] stopGifView:weakSelf];
                 weakSelf.image = image;

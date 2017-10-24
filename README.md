@@ -24,3 +24,11 @@ NSString *url = @"http://127.0.0.1/test.jpg";
 [imageView setImageWithUrl:url placeholderImage:nil toDisk:YES];
 
 ```
+
+##运行Demo
+
+进入ImageCacheDemo路径下执行，点击ImageCacheDemo.xcworkspace即可运行
+
+```
+pod install
+```

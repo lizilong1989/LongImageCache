@@ -16,10 +16,10 @@ Pod::Spec.new do |spec|
   spec.dependency   'LongRequest', '~> 1.0.0'
 
   spec.subspec 'WebP' do |webp|
-  webp.source_files = "3rdparty/webp/**/*.{h}"
-  webp.vendored_libraries = ['3rdparty/webp/lib/libwebp.a','3rdparty/webp/lib/libwebpdecoder.a']
-  webp.xcconfig = { 
-      'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) LONG_WEBP=1'
+    webp.source_files = "3rdparty/webp/**/*.{h}"
+    webp.vendored_libraries = ['3rdparty/webp/lib/libwebp.a','3rdparty/webp/lib/libwebpdecoder.a']
+    webp.xcconfig = { 
+        'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) LONG_WEBP=1'
     }
   end
 end
