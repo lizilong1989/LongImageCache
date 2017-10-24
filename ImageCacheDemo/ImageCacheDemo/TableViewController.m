@@ -10,6 +10,7 @@
 
 #import "LongCache.h"
 #import "UIImageView+LongCache.h"
+#import "LongPhotoBrowser.h"
 
 @interface TableViewController ()
 {
@@ -80,6 +81,13 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     return 150.f;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    NSString *url = [_datasource objectAtIndex:indexPath.row];
+    [[LongPhotoBrowser sharedInstance] showWithUrls:@[url]];
 }
 
 /*
