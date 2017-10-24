@@ -60,6 +60,42 @@
 
 @implementation LongGifImage
 
++ (instancetype)imageNamed:(NSString*)name
+{
+    if (name.length == 0) {
+        return nil;
+    }
+    CGFloat scale = [UIScreen mainScreen].scale;
+    
+    LongGifImage *image = nil;
+    if (scale > 1.0f) {
+        NSString *retinaPath = [[NSBundle mainBundle] pathForResource:[name stringByAppendingString:@"@2x"] ofType:@"gif"];
+        NSData *data = [NSData dataWithContentsOfFile:retinaPath];
+        if (data.length == 0) {
+            NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:@"gif"];
+             data = [NSData dataWithContentsOfFile:path];
+        }
+        
+        if (data.length > 0) {
+            CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(data), NULL);
+            image = [[LongGifImage alloc] initWithCGImageSource:imageSource];
+            CFRelease(imageSource);
+        }
+    } else {
+        NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:@"gif"];
+NSData *data = [NSData dataWithContentsOfFile:path];
+        
+        if (data.length > 0) {
+            CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(data), NULL);
+            image = [[LongGifImage alloc] initWithCGImageSource:imageSource];
+            CFRelease(imageSource);
+        }
+    }
+    
+
+    return image;
+}
+
 - (id)initWithCGImageSource:(CGImageSourceRef)imageSource
 {
     return [self initWithCGImageSource:imageSource scale:1.0f];

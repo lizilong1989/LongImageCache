@@ -13,6 +13,12 @@
 
 - (void)showWithImages:(NSArray*)aImages;
 
+- (void)showWithImages:(NSArray*)aImages
+             withIndex:(NSInteger)aIndex;
+
 - (void)showWithUrls:(NSArray*)aUrls;
+
+- (void)showWithUrls:(NSArray*)aUrls
+           withIndex:(NSInteger)aIndex;
 
 @end

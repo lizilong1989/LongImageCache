@@ -86,8 +86,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSString *url = [_datasource objectAtIndex:indexPath.row];
-    [[LongPhotoBrowser sharedInstance] showWithUrls:@[url]];
+    [[LongPhotoBrowser sharedInstance] showWithUrls:_datasource withIndex:indexPath.row];
 }
 
 /*

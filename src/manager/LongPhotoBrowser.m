@@ -42,6 +42,7 @@ static LongPhotoBrowser *browser = nil;
 
 @property (nonatomic, strong) NSArray *images;
 @property (nonatomic, strong) NSArray *urls;
+@property (nonatomic, assign) NSInteger index;
 
 @end
 
@@ -63,15 +64,12 @@ static LongPhotoBrowser *browser = nil;
     
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeAction)];
     [self.collectionView addGestureRecognizer:tap];
+    
+    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:_index inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
 }
 
 #pragma mark - UICollectionViewDataSource
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
-{
-    return 1;
-}
-
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
 {
     if ([_images count] > 0) {
         return [_images count];
@@ -84,6 +82,11 @@ static LongPhotoBrowser *browser = nil;
     return 0;
 }
 
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
+{
+    return 1;
+}
+
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString* identify = @"collectionCell";
@@ -92,6 +95,7 @@ static LongPhotoBrowser *browser = nil;
         
     }
     [cell sizeToFit];
+    cell.imageView.image = nil;
     if ([_images count] > 0) {
         cell.imageView.image = [_images objectAtIndex:indexPath.row];
     }
@@ -169,21 +173,32 @@ static LongPhotoBrowser *browser = nil;
 
 - (void)showWithImages:(NSArray*)aImages
 {
+    [self showWithImages:aImages withIndex:0];
+}
+
+- (void)showWithImages:(NSArray*)aImages withIndex:(NSInteger)aIndex
+{
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
     LongPhotoViewController *view = [[LongPhotoViewController alloc] initWithCollectionViewLayout:flowLayout];
     view.images = aImages;
+    view.index = aIndex;
     UIViewController *rootController = [UIApplication sharedApplication].keyWindow.rootViewController;
     [rootController presentViewController:view animated:YES completion:nil];
-    
 }
 
 - (void)showWithUrls:(NSArray*)aUrls
+{
+    [self showWithUrls:aUrls withIndex:0];
+}
+
+- (void)showWithUrls:(NSArray*)aUrls withIndex:(NSInteger)aIndex
 {
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
     LongPhotoViewController *view = [[LongPhotoViewController alloc] initWithCollectionViewLayout:flowLayout];
     view.urls = aUrls;
+    view.index = aIndex;
     UIViewController *rootController = [UIApplication sharedApplication].keyWindow.rootViewController;
     [rootController presentViewController:view animated:YES completion:nil];
 }
