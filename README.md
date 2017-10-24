@@ -25,7 +25,7 @@ NSString *url = @"http://127.0.0.1/test.jpg";
 
 ```
 
-##运行Demo
+## 运行Demo
 
 进入ImageCacheDemo路径下执行，点击ImageCacheDemo.xcworkspace即可运行
 
