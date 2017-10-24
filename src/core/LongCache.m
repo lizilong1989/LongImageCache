@@ -103,8 +103,6 @@ static LongCache *instance = nil;
     if (aToDisk) {
         [self _saveCacheFromDiskWithData:aData forKey:md5Key];
     }
-    NSLog(@"%@",md5Key);
-    NSLog(@"%ld",CFDictionaryGetCount(_dicRef));
     pthread_mutex_unlock(&_mutex);
 }
 
