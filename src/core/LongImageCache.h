@@ -2,7 +2,7 @@
 //  LongImageCache.h
 //  ImageCacheDemo
 //
-//  Created by EaseMob on 2017/10/12.
+//  Created by zilong.li on 2017/10/12.
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 

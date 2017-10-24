@@ -2,7 +2,7 @@
 //  LongPhotoBrowser.m
 //  Pods
 //
-//  Created by EaseMob on 2017/10/24.
+//  Created by zilong.li on 2017/10/24.
 //
 
 #import "LongPhotoBrowser.h"
