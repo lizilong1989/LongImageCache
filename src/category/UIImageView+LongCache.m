@@ -42,7 +42,7 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
     UIActivityIndicatorView *indicatorView = objc_getAssociatedObject(self, LongCacheindicatorViewKey);
     if (indicatorView == nil) {
         indicatorView = [[UIActivityIndicatorView alloc] init];
-        [indicatorView setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleGray];
+        [indicatorView setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleWhiteLarge];
         objc_setAssociatedObject(self, LongCacheindicatorViewKey, indicatorView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return indicatorView;
@@ -214,6 +214,10 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
         return;
     } else {
         [self _setImageWithImage:aImage data:nil];
+    }
+    
+    if (aUrl.length == 0) {
+        return;
     }
     
     [[LongCacheDownloadTask sharedInstance] cancelDownloadTaskWithUrl:aUrl];

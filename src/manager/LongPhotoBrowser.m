@@ -101,7 +101,7 @@ static LongPhotoBrowser *browser = nil;
     }
     
     if ([_urls count] > 0) {
-        [cell.imageView setImageWithUrl:[_urls objectAtIndex:indexPath.row]];
+        [cell.imageView setImageWithUrl:[_urls objectAtIndex:indexPath.row] placeholderImage:nil toDisk:NO showActivityView:YES];
     }
     
     cell.userInteractionEnabled = YES;
