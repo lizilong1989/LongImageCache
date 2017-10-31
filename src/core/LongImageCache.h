@@ -42,4 +42,22 @@
  */
 - (void)clearImageCache;
 
+/*!
+ *  是否是gif图片
+ *
+ *  @param aData    图片数据
+ *
+ *  @return 是否是gif格式
+ */
++ (BOOL)isGif:(NSData *)aData;
+
+/*!
+ *  是否是WebP图片
+ *
+ *  @param aData    图片数据
+ *
+ *  @return 是否是WebP格式
+ */
++ (BOOL)isWebP:(NSData*)aData;
+
 @end

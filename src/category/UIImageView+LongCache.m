@@ -12,6 +12,8 @@
 
 #import "LongCache.h"
 #import "LongImageCache.h"
+#import "LongGifImage.h"
+#import "LongWebPImage.h"
 #import "LongCacheDownloadTask.h"
 
 static const void *LongCacheGifDataKey = &LongCacheGifDataKey;
@@ -266,13 +268,16 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
                 NSData *gifData = [[LongCache sharedInstance] getCacheWithKey:weakSelf.urlKey];
                 if (gifData.length > 0 ) {
                     [weakSelf setLongGifData:gifData];
-                    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                        [[LongGifManager shared].gifViewHashTable addObject:weakSelf];
-                    });
-                    
-                    if (![LongGifManager shared].displayLink) {
-                        [LongGifManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[LongGifManager shared] selector:@selector(play)];
-                        [[LongGifManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+                    if (![[LongGifManager shared].gifViewHashTable containsObject:weakSelf])
+                    {
+                        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                            [[LongGifManager shared].gifViewHashTable addObject:weakSelf];
+                        });
+                        
+                        if (![LongGifManager shared].displayLink) {
+                            [LongGifManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[LongGifManager shared] selector:@selector(play)];
+                            [[LongGifManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+                        }
                     }
                 }
             } else {
@@ -282,7 +287,30 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
         }
         
         if (aData) {
-            weakSelf.image = [UIImage imageWithData:aData];
+            if ([LongImageCache isGif:aData]) {
+                [weakSelf setLongGifData:aData];
+                if (![[LongGifManager shared].gifViewHashTable containsObject:weakSelf])
+                {
+                    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                        [[LongGifManager shared].gifViewHashTable addObject:weakSelf];
+                    });
+                    
+                    if (![LongGifManager shared].displayLink) {
+                        [LongGifManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[LongGifManager shared] selector:@selector(play)];
+                        [[LongGifManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+                    }
+                }
+            }
+#ifdef LONG_WEBP
+            else if ([LongImageCache isWebP:aData]) {
+                weakSelf.image = [[LongWebPImage alloc] initWithData:aData];
+                [[LongGifManager shared] stopGifView:weakSelf];
+            }
+#endif
+            else {
+                [self _setImageWithData:aData];
+                [[LongGifManager shared] stopGifView:weakSelf];
+            }
         }
         
         [weakSelf setNeedsLayout];
@@ -336,6 +364,16 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
     } else {
         dispatch_sync(dispatch_get_main_queue(), block);
     }
+}
+
+- (void)_setImageWithData:(NSData*)aData
+{
+    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
+    NSInteger index = 0;
+    CGImageRef imageRef = CGImageSourceCreateImageAtIndex(imageSource, index, NULL);
+    self.layer.contents = (__bridge id)(imageRef);
+    CFRelease(imageRef);
+    CFRelease(imageSource);
 }
 
 @end

@@ -136,10 +136,17 @@ static LongCache *instance = nil;
 
 - (void)clearCacheWithKey:(NSString *)aKey
 {
+    [self clearCacheWithKey:aKey toDisk:NO];
+}
+
+- (void)clearCacheWithKey:(NSString *)aKey toDisk:(BOOL)aToDisk
+{
     pthread_mutex_lock(&_mutex);
     NSString *md5Key = [aKey md5String];
     [self _removeWithKey:aKey];
-    [self _removeCacheFromDiskWithKey:md5Key];
+    if (aToDisk) {
+        [self _removeCacheFromDiskWithKey:md5Key];
+    }
     CFDictionaryRemoveValue(_dicRef, (__bridge const void *)aKey);
     pthread_mutex_unlock(&_mutex);
 }

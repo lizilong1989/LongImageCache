@@ -155,6 +155,28 @@ static LongImageCache *instance = nil;
     return image;
 }
 
++ (BOOL)isGif:(NSData *)aData
+{
+    BOOL ret = NO;
+    if (aData.length > 0 ) {
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
+        NSString *imageContentType = [LongImageCache contentTypeForImageData:aData];
+        ret = [imageContentType isEqualToString:@"image/gif"] || [LongImageCache CGImageSourceContainsAnimatedGif:imageSource];
+        CFRelease(imageSource);
+    }
+    return ret;
+}
+
++ (BOOL)isWebP:(NSData*)aData
+{
+    BOOL ret = NO;
+    if (aData.length > 0 ) {
+        NSString *imageContentType = [LongImageCache contentTypeForImageData:aData];
+        ret = [imageContentType isEqualToString:@"image/webp"];
+    }
+    return ret;
+}
+
 + (BOOL)CGImageSourceContainsAnimatedGif:(CGImageSourceRef)imageSource
 {
     return imageSource && UTTypeConformsTo(CGImageSourceGetType(imageSource), kUTTypeGIF) && CGImageSourceGetCount(imageSource) > 1;

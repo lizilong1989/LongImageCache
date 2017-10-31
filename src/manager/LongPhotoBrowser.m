@@ -91,9 +91,6 @@ static LongPhotoBrowser *browser = nil;
 {
     static NSString* identify = @"collectionCell";
     LongCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:identify forIndexPath:indexPath];
-    if (!cell) {
-        
-    }
     [cell sizeToFit];
     cell.imageView.image = nil;
     if ([_images count] > 0) {

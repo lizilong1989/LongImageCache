@@ -54,6 +54,15 @@
 - (void)clearCacheWithKey:(NSString*)aKey;
 
 /*!
+ *  根据key清除缓存数据
+ *
+ *  @param aKey     缓存key
+ *  @param aToDisk  是否清除硬盘中的数据
+ */
+- (void)clearCacheWithKey:(NSString *)aKey
+                   toDisk:(BOOL)aToDisk;
+
+/*!
  *  清除所有缓存数据
  */
 - (void)clearAllCache;
