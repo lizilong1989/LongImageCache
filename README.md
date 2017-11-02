@@ -33,6 +33,26 @@ NSString *url = @"http://127.0.0.1/test.jpg";
 pod install
 ```
 
+## 播放GIF与SDWebImage性能对比
+
+相同两张gif图片，使用iphone8模拟器，虽然使用了一定的cpu，但是对内存消耗差距十分明显（选取的gif图片帧数较多，分别是209和135）
+
+使用SDImageCache播放GIF图片时的内存和CPU消耗:
+
+![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/SD-Gif.png)
+
+
+使用LongImageCache播放GIF图片时的内存和CPU消耗:
+
+![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/Long-Gif.png)
+
+使用的gif素材：
+
+![image](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1507717762475&di=8e388d038a3a65469db35e53a9b45743&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01a9f35542a2430000019ae979d241.jpg)
+
+![image](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1508757634798&di=d70c6bc2ac001a4ea10dc9698c77b0fb&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F0188a958a9ad69a801219c77cff8f7.gif)
+
+
 ## Relase Note
 
 ### v1.0.3 
