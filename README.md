@@ -48,9 +48,9 @@ pod install
 
 使用的gif素材：
 
-![image](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1507717762475&di=8e388d038a3a65469db35e53a9b45743&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01a9f35542a2430000019ae979d241.jpg)
+<img width="215" height="181" src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1507717762475&di=8e388d038a3a65469db35e53a9b45743&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01a9f35542a2430000019ae979d241.jpg"/>
 
-![image](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1508757634798&di=d70c6bc2ac001a4ea10dc9698c77b0fb&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F0188a958a9ad69a801219c77cff8f7.gif)
+<img width="215" height="181" src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1508757634798&di=d70c6bc2ac001a4ea10dc9698c77b0fb&imgtype=0&src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F0188a958a9ad69a801219c77cff8f7.gif"/>
 
 
 ## Relase Note
