@@ -41,10 +41,18 @@ pod install
 
 ![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/SD-Gif.png)
 
+播放效果:
+
+![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/SD.gif)
+
 
 使用LongImageCache播放GIF图片时的内存和CPU消耗:
 
 ![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/Long-Gif.png)
+
+播放效果:
+
+![image](https://raw.githubusercontent.com/lizilong1989/LongImageCache/master/show/long.gif)
 
 使用的gif素材：
 
