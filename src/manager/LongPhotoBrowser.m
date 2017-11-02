@@ -36,6 +36,11 @@ static LongPhotoBrowser *browser = nil;
     _imageView.frame = self.bounds;
 }
 
+- (void)dealloc
+{
+    [_imageView stopAnimating];
+}
+
 @end
 
 @interface LongPhotoViewController : UICollectionViewController <UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>

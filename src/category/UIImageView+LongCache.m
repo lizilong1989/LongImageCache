@@ -22,30 +22,19 @@ static const void *LongCacheUrlKey = &LongCacheUrlKey;
 static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
 static const void *LongCacheDisplayLinkViewKey = &LongCacheDisplayLinkViewKey;
 static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
+static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 
 @interface UIImageView (LongCachePrivate)
+
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 @property (nonatomic, strong) NSData *longGifData;
 @property (nonatomic, strong) NSNumber *longIndex;
 @property (nonatomic, strong) NSNumber *timeDuration;
 @property (nonatomic, strong) NSString *urlKey;
 @property (nonatomic, strong) CADisplayLink *displayLink;
+@property (nonatomic, assign) CGImageSourceRef imageSourceRef;
 
 - (void)playGif;
-
-@end
-
-@interface LongGifManager : NSObject
-
-@property (nonatomic, strong) CADisplayLink *displayLink;
-@property (nonatomic, strong) NSHashTable *gifViewHashTable;
-@property (nonatomic, strong) NSMapTable *gifSourceRefMapTable;
-
-+ (LongGifManager *)shared;
-
-- (void)stopGifView:(UIImageView *)view;
-
-- (void)play;
 
 @end
 
@@ -57,6 +46,7 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
 @dynamic urlKey;
 @dynamic displayLink;
 @dynamic timeDuration;
+@dynamic imageSourceRef;
 
 + (void)load
 {
@@ -68,7 +58,6 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
     Method originalStopMethod = class_getInstanceMethod([UIImageView class], @selector(stopAnimating));
     Method swizzleStopMethod = class_getInstanceMethod([UIImageView class], @selector(long_stopAnimating));
     method_exchangeImplementations(originalStopMethod, swizzleStopMethod);
-    
     
     Method originalIsAnimatingMethod = class_getInstanceMethod([UIImageView class], @selector(isAnimating));
     Method swizzleIsAnimatingMethod = class_getInstanceMethod([UIImageView class], @selector(long_isAnimating));
@@ -99,7 +88,7 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
 
 - (void)setLongGifData:(NSData*)aGifData
 {
-    objc_setAssociatedObject(self, LongCacheGifDataKey, aGifData, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, LongCacheGifDataKey, aGifData, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
 - (NSNumber*)longIndex
@@ -129,7 +118,7 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
 
 - (void)setUrlKey:(NSString *)urlKey
 {
-    objc_setAssociatedObject(self, LongCacheUrlKey, urlKey, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, LongCacheUrlKey, urlKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
 - (CADisplayLink*)displayLink
@@ -139,7 +128,17 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
 
 - (void)setDisplayLink:(CADisplayLink *)displayLink
 {
-    objc_setAssociatedObject(self, LongCacheDisplayLinkViewKey, displayLink, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, LongCacheDisplayLinkViewKey, displayLink, OBJC_ASSOCIATION_RETAIN);
+}
+
+- (void)setImageSourceRef:(CGImageSourceRef)imageSourceRef
+{
+    objc_setAssociatedObject(self, LongCacheImageSourceRefKey, (__bridge id _Nullable)(imageSourceRef), OBJC_ASSOCIATION_ASSIGN);
+}
+
+- (CGImageSourceRef)imageSourceRef
+{
+    return (__bridge CGImageSourceRef)(objc_getAssociatedObject(self, LongCacheImageSourceRefKey));
 }
 
 #pragma mark - gif
@@ -151,8 +150,12 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
         [self stopAnimating];
         return;
     }
-    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(gifData), NULL);
-    NSUInteger numberOfFrames = CGImageSourceGetCount(imageSource);
+    
+    if (!self.imageSourceRef) {
+        self.imageSourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)(gifData), NULL);
+    }
+    
+    NSUInteger numberOfFrames = CGImageSourceGetCount(self.imageSourceRef);
     NSInteger index = self.longIndex.integerValue;
     if (index >= numberOfFrames) {
         index = 0;
@@ -160,17 +163,16 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
     
     NSTimeInterval time = [self.timeDuration doubleValue];
     time += self.displayLink.duration;
-    if (time <= [self _frameDurationAtIndex:index source:imageSource]) {
+    if (time <= [self _frameDurationAtIndex:index source:self.imageSourceRef]) {
         self.timeDuration = @(time);
-        CFRelease(imageSource);
         return;
     }
     self.timeDuration = 0;
     
-    CGImageRef imageRef = CGImageSourceCreateImageAtIndex(imageSource, index, NULL);
-    self.layer.contents = (__bridge id)(imageRef);
+    CGImageRef imageRef = CGImageSourceCreateImageAtIndex(self.imageSourceRef, index, NULL);
+    self.image = [UIImage imageWithCGImage:imageRef];
+    [self.layer setNeedsDisplay];
     CFRelease(imageRef);
-    CFRelease(imageSource);
     [self setLongIndex:@(++index)];
 }
 
@@ -241,88 +243,17 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
     return isAnimating;
 }
 
-#pragma mark - override
-
 - (void)long_dealloc
 {
     [self stopAnimating];
     [self.displayLink invalidate];
 }
 
-/*
-- (void)didMoveToSuperview
+#pragma mark - override
+
+- (void)displayLayer:(CALayer *)layer
 {
-    [super didMoveToSuperview];
-    
-    if (self.longGifData) {
-        [self startAnimating];
-    } else {
-        [self stopAnimating];
-    }
-}
-
-
-- (void)didMoveToWindow
-{
-    [super didMoveToWindow];
-
-    if (self.longGifData) {
-        [self startAnimating];
-    } else {
-        [self stopAnimating];
-    }
-}*/
-
-@end
-
-@implementation LongGifManager
-
-+ (LongGifManager *)shared{
-    static LongGifManager *_sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _sharedInstance = [[LongGifManager alloc] init];
-    });
-    return _sharedInstance;
-}
-
--(id)init
-{
-    self = [super init];
-    if (self) {
-        _gifViewHashTable = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
-        _gifSourceRefMapTable = [NSMapTable mapTableWithKeyOptions:NSMapTableWeakMemory valueOptions:NSMapTableWeakMemory];
-    }
-    return self;
-}
-
-- (void)play{
-    for (UIImageView *imageView in _gifViewHashTable) {
-        if ([imageView respondsToSelector:@selector(playGif)]) {
-            [imageView performSelector:@selector(playGif)];
-        }
-    }
-}
-
-- (void)stopDisplayLink
-{
-    if (self.displayLink) {
-        [self.displayLink invalidate];
-        self.displayLink = nil;
-    }
-}
-
-- (void)stopGifView:(UIImageView *)view
-{
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[LongGifManager shared].gifSourceRefMapTable objectForKey:view]);
-    if (ref) {
-        [_gifSourceRefMapTable removeObjectForKey:view];
-        CFRelease(ref);
-    }
-    [_gifViewHashTable removeObject:view];
-    if (_gifViewHashTable.count<1 && !_displayLink) {
-        [self stopDisplayLink];
-    }
+    layer.contents = (__bridge id)self.image.CGImage;
 }
 
 @end
@@ -416,8 +347,6 @@ static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
                                                      }
                                                  }];
 }
-
-#pragma mark - overrides
 
 #pragma mark - private
 
