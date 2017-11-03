@@ -354,6 +354,12 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 {
     __weak typeof(self) weakSelf = self;
     dispatch_block_t block = ^{
+        
+        if (self.imageSourceRef) {
+            CFRelease(self.imageSourceRef);
+            self.imageSourceRef = nil;
+        }
+        
         if (image) {
             weakSelf.image = nil;
             if (image.images) {
