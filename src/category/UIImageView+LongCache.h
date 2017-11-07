@@ -88,4 +88,12 @@
                progress:(void (^)(int progress))aProgressBlock
              completion:(void (^)(UIImage *aImage, NSError *aError))aCompletionBlock;
 
+/*!
+ *  设置图片根据名称
+ *
+ *  @param aName                图片名称
+ *
+ */
+- (void)setImageWithName:(NSString*)aName;
+
 @end

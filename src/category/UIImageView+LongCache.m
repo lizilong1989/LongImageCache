@@ -54,7 +54,6 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     Method swizzleStartMethod = class_getInstanceMethod([UIImageView class], @selector(long_startAnimating));
     method_exchangeImplementations(originalStartMethod, swizzleStartMethod);
     
-    
     Method originalStopMethod = class_getInstanceMethod([UIImageView class], @selector(stopAnimating));
     Method swizzleStopMethod = class_getInstanceMethod([UIImageView class], @selector(long_stopAnimating));
     method_exchangeImplementations(originalStopMethod, swizzleStopMethod);
@@ -64,9 +63,9 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     method_exchangeImplementations(originalIsAnimatingMethod, swizzleIsAnimatingMethod);
     
     SEL dealloc = NSSelectorFromString(@"dealloc");
-    Method originalIsDeallocMethod = class_getInstanceMethod([UIView class], dealloc);
-    Method swizzleIsDeallocMethod = class_getInstanceMethod([UIView class], @selector(long_dealloc));
-    method_exchangeImplementations(originalIsDeallocMethod, swizzleIsDeallocMethod);
+    Method originalDeallocMethod = class_getInstanceMethod([UIImageView class], dealloc);
+    Method swizzleDeallocMethod = class_getInstanceMethod([UIImageView class], @selector(long_dealloc));
+    method_exchangeImplementations(originalDeallocMethod, swizzleDeallocMethod);
 }
 
 - (UIActivityIndicatorView *)indicatorView
@@ -348,6 +347,30 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
                                                  }];
 }
 
+- (void)setImageWithName:(NSString*)aName
+{
+    if (aName.length == 0) {
+        return;
+    }
+    
+    NSData *data = [[LongCache sharedInstance] getCacheWithKey:aName];
+    
+    if (data == nil) {
+        
+        data = [self _getDataWithName:aName pathComponent:@"gif"];
+        
+        if (data.length == 0) {
+            data = [self _getDataWithName:aName pathComponent:@"png"];
+        }
+
+        if (data.length > 0) {
+            [[LongCache sharedInstance] storeCacheWithData:data forKey:aName];
+        }
+    }
+    
+    [self _setImageWithImage:nil data:data];
+}
+
 #pragma mark - private
 
 - (void)_setImageWithImage:(UIImage*)image data:(NSData*)aData
@@ -355,9 +378,9 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     __weak typeof(self) weakSelf = self;
     dispatch_block_t block = ^{
         
-        if (self.imageSourceRef) {
-            CFRelease(self.imageSourceRef);
-            self.imageSourceRef = nil;
+        if (weakSelf.imageSourceRef) {
+            CFRelease(weakSelf.imageSourceRef);
+            weakSelf.imageSourceRef = nil;
         }
         
         if (image) {
@@ -390,7 +413,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
             }
 #endif
             else {
-                [self _setImageWithData:aData];
+                [weakSelf _setImageWithData:aData];
                 [weakSelf stopAnimating];
             }
         }
@@ -456,6 +479,24 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     self.layer.contents = (__bridge id)(imageRef);
     CFRelease(imageRef);
     CFRelease(imageSource);
+}
+
+- (NSData*)_getDataWithName:(NSString*)aName pathComponent:(NSString*)aPathComponent
+{
+    NSData *data = nil;
+    CGFloat scale = [UIScreen mainScreen].scale;
+    if (scale > 1.0f) {
+        NSString *retinaPath = [[NSBundle mainBundle] pathForResource:[aName stringByAppendingString:@"@2x"] ofType:aPathComponent];
+        data = [NSData dataWithContentsOfFile:retinaPath];
+        if (data.length == 0) {
+            NSString *path = [[NSBundle mainBundle] pathForResource:aName ofType:aPathComponent];
+            data = [NSData dataWithContentsOfFile:path];
+        }
+    } else {
+        NSString *path = [[NSBundle mainBundle] pathForResource:aName ofType:aPathComponent];
+        data = [NSData dataWithContentsOfFile:path];
+    }
+    return data;
 }
 
 @end
