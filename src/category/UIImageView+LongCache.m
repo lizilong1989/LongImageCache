@@ -16,7 +16,6 @@
 #import "LongWebPImage.h"
 #import "LongCacheDownloadTask.h"
 
-static const void *LongCacheGifDataKey = &LongCacheGifDataKey;
 static const void *LongCacheIndexKey = &LongCacheIndexKey;
 static const void *LongCacheUrlKey = &LongCacheUrlKey;
 static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
@@ -27,21 +26,19 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 @interface UIImageView (LongCachePrivate)
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
-@property (nonatomic, strong) NSData *longGifData;
 @property (nonatomic, strong) NSNumber *longIndex;
 @property (nonatomic, strong) NSNumber *timeDuration;
 @property (nonatomic, strong) NSString *urlKey;
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic, assign) CGImageSourceRef imageSourceRef;
 
-- (void)playGif;
+- (void)long_playGif;
 
 @end
 
 @implementation UIImageView (LongCachePrivate)
 
 @dynamic indicatorView;
-@dynamic longGifData;
 @dynamic longIndex;
 @dynamic urlKey;
 @dynamic displayLink;
@@ -77,17 +74,6 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
         objc_setAssociatedObject(self, LongCacheindicatorViewKey, indicatorView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return indicatorView;
-}
-
-- (NSData*)longGifData
-{
-    NSData *gifData = objc_getAssociatedObject(self, LongCacheGifDataKey);
-    return gifData;
-}
-
-- (void)setLongGifData:(NSData*)aGifData
-{
-    objc_setAssociatedObject(self, LongCacheGifDataKey, aGifData, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
 - (NSNumber*)longIndex
@@ -142,16 +128,11 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 
 #pragma mark - gif
 
-- (void)playGif
+- (void)long_playGif
 {
-    NSData *gifData = self.longGifData;
-    if (gifData == nil) {
+    if (!self.imageSourceRef) {
         [self stopAnimating];
         return;
-    }
-    
-    if (!self.imageSourceRef) {
-        self.imageSourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)(gifData), NULL);
     }
     
     NSUInteger numberOfFrames = CGImageSourceGetCount(self.imageSourceRef);
@@ -205,11 +186,11 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 
 - (void)long_startAnimating
 {
-    BOOL ret = self.longGifData != nil;
+    BOOL ret = self.imageSourceRef != nil;
     
     if (ret) {
         if (!self.displayLink) {
-            self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(playGif)];
+            self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(long_playGif)];
             [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         }
         self.displayLink.paused = NO;
@@ -389,13 +370,13 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
                 weakSelf.image = [image.images objectAtIndex:0];
                 NSData *gifData = [[LongCache sharedInstance] getCacheWithKey:weakSelf.urlKey];
                 if (gifData.length > 0 ) {
-                    [weakSelf setLongGifData:gifData];
+                    [weakSelf setImageSourceRef:CGImageSourceCreateWithData((__bridge CFDataRef)(gifData), NULL)];
                     [weakSelf startAnimating];
                 } else {
-                    [weakSelf setLongGifData:nil];
+                    [weakSelf setImageSourceRef:nil];
                 }
             } else {
-                [weakSelf setLongGifData:nil];
+                [weakSelf setImageSourceRef:nil];
                 weakSelf.image = image;
                 [weakSelf stopAnimating];
             }
@@ -403,7 +384,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
         
         if (aData) {
             if ([LongImageCache isGif:aData]) {
-                [weakSelf setLongGifData:aData];
+                [weakSelf setImageSourceRef:CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL)];
                 [weakSelf startAnimating];
             }
 #ifdef LONG_WEBP
