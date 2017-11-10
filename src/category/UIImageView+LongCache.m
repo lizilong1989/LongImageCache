@@ -372,12 +372,9 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
                 if (gifData.length > 0 ) {
                     [weakSelf setImageSourceRef:CGImageSourceCreateWithData((__bridge CFDataRef)(gifData), NULL)];
                     [weakSelf startAnimating];
-                } else {
-                    [weakSelf setImageSourceRef:nil];
                 }
             } else {
-                [weakSelf setImageSourceRef:nil];
-                weakSelf.image = image;
+                [weakSelf _setImageWithImage:image];
                 [weakSelf stopAnimating];
             }
         }
@@ -389,7 +386,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
             }
 #ifdef LONG_WEBP
             else if ([LongImageCache isWebP:aData]) {
-                weakSelf.image = [[LongWebPImage alloc] initWithData:aData];
+                [weakSelf _setImageWithImage:[[LongWebPImage alloc] initWithData:aData]];
                 [weakSelf stopAnimating];
             }
 #endif
@@ -460,6 +457,12 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     self.layer.contents = (__bridge id)(imageRef);
     CFRelease(imageRef);
     CFRelease(imageSource);
+}
+
+- (void)_setImageWithImage:(UIImage*)aImage
+{
+    self.image = aImage;
+    [self.layer setNeedsDisplay];
 }
 
 - (NSData*)_getDataWithName:(NSString*)aName pathComponent:(NSString*)aPathComponent

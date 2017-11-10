@@ -11,8 +11,9 @@
 
 static LongPhotoBrowser *browser = nil;
 
-@interface LongCollectionViewCell : UICollectionViewCell
+@interface LongCollectionViewCell : UICollectionViewCell <UIScrollViewDelegate>
 
+@property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIImageView *imageView;
 
 @end
@@ -23,9 +24,16 @@ static LongPhotoBrowser *browser = nil;
 {
     self = [super initWithFrame:frame];
     if (self) {
+        _scrollView = [[UIScrollView alloc] initWithFrame:frame];
+        _scrollView.minimumZoomScale = 1.0f;
+        _scrollView.maximumZoomScale = 2.0f;
+        _scrollView.multipleTouchEnabled = YES;
+        _scrollView.delegate = self;
+        [self addSubview:_scrollView];
+        
         _imageView = [[UIImageView alloc] initWithFrame:frame];
         _imageView.contentMode = UIViewContentModeScaleAspectFit;
-        [self addSubview:_imageView];
+        [_scrollView addSubview:_imageView];
     }
     return self;
 }
@@ -34,11 +42,52 @@ static LongPhotoBrowser *browser = nil;
 {
     [super setFrame:frame];
     _imageView.frame = self.bounds;
+    _scrollView.frame = self.bounds;
 }
 
 - (void)dealloc
 {
     [_imageView stopAnimating];
+}
+
+- (void)layoutSubviews {
+    
+    // Super
+    [super layoutSubviews];
+    
+    // Center the image as it becomes smaller than the size of the screen
+    CGSize boundsSize = _scrollView.bounds.size;
+    CGRect frameToCenter = _imageView.frame;
+    
+    // Horizontally
+    if (frameToCenter.size.width < boundsSize.width) {
+        frameToCenter.origin.x = floorf((boundsSize.width - frameToCenter.size.width) / 2.0);
+    } else {
+        frameToCenter.origin.x = 0;
+    }
+    
+    // Vertically
+    if (frameToCenter.size.height < boundsSize.height) {
+        frameToCenter.origin.y = floorf((boundsSize.height - frameToCenter.size.height) / 2.0);
+    } else {
+        frameToCenter.origin.y = 0;
+    }
+    
+    // Center
+    if (!CGRectEqualToRect(_imageView.frame, frameToCenter))
+        _imageView.frame = frameToCenter;
+}
+
+#pragma mark - UIScrollViewDelegate
+
+-(UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView{
+    return self.imageView;
+    
+}
+
+-(void)scrollViewDidZoom:(UIScrollView *)scrollView{
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
 }
 
 @end
@@ -48,6 +97,9 @@ static LongPhotoBrowser *browser = nil;
 @property (nonatomic, strong) NSArray *images;
 @property (nonatomic, strong) NSArray *urls;
 @property (nonatomic, assign) NSInteger index;
+
+@property (nonatomic, strong) UIView *titleView;
+@property (nonatomic, strong) UIButton *closeButton;
 
 @end
 
@@ -67,10 +119,36 @@ static LongPhotoBrowser *browser = nil;
     self.collectionView.pagingEnabled = YES;
     self.collectionView.userInteractionEnabled = YES;
     
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeAction)];
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showAction)];
     [self.collectionView addGestureRecognizer:tap];
     
     [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:_index inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
+    
+    [self.view addSubview:self.titleView];
+}
+
+#pragma mark - view
+
+- (UIView*)titleView
+{
+    if (_titleView == nil) {
+        _titleView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.collectionView.frame), 64)];
+        _titleView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
+        _titleView.hidden = YES;
+        [_titleView addSubview:self.closeButton];
+    }
+    return _titleView;
+}
+
+- (UIButton*)closeButton
+{
+    if (_closeButton == nil) {
+        _closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _closeButton.frame = CGRectMake(0, 20, CGRectGetHeight(_titleView.frame), 44);
+        [_closeButton setTitle:@"Close" forState:UIControlStateNormal];
+        [_closeButton addTarget:self action:@selector(closeAction) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _closeButton;
 }
 
 #pragma mark - UICollectionViewDataSource
@@ -149,6 +227,11 @@ static LongPhotoBrowser *browser = nil;
 - (void)closeAction
 {
     [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)showAction
+{
+    self.titleView.hidden = !self.titleView.hidden;
 }
 
 @end
