@@ -25,6 +25,15 @@ NSString *url = @"http://127.0.0.1/test.jpg";
 
 ```
 
+图片浏览使用方法
+
+```
+#import "LongPhotoBrowser.h"
+
+//进图图片浏览
+[[LongPhotoBrowser sharedInstance] showWithUrls:@[@"http://127.0.0.1/test.jpg"] withIndex:0];
+```
+
 ## 运行Demo
 
 进入ImageCacheDemo路径下执行，点击ImageCacheDemo.xcworkspace即可运行
@@ -62,6 +71,13 @@ pod install
 
 
 ## Relase Note
+
+### v1.0.4
+
+* UIImageView+LongCache添加可以设置本地gif图片
+* 针对UIImageView+LongCache进行优化
+* LongPhotoBrowser图片浏览添加简单功能
+* 修复图片下载阻塞的bug
 
 ### v1.0.3 
 

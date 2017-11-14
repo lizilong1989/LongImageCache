@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = 'LongImageCache'
-  spec.version      = '1.0.3'
+  spec.version      = '1.0.4'
   spec.license       = { :type => 'Personal', :text => 'zilong.li' }
   spec.summary      = 'An Objective-C tool for Cache'
   spec.homepage     = 'https://github.com/lizilong1989/LongImageCache'
@@ -10,7 +10,7 @@ Pod::Spec.new do |spec|
   spec.requires_arc = true
   spec.frameworks   = 'Security'
   spec.xcconfig     = {'OTHER_LDFLAGS' => '-ObjC'}
-  spec.dependency   'LongDispatch', '~> 1.0.2'
+  spec.dependency   'LongDispatch', '~> 1.0.3'
   spec.dependency   'LongRequest', '~> 1.0.1'
 
   spec.default_subspec = 'Core'

@@ -384,6 +384,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
         
         if (aData) {
             if ([LongImageCache isGif:aData]) {
+                weakSelf.image = [UIImage imageWithData:aData];
                 [weakSelf setImageSourceRef:CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL)];
                 [weakSelf startAnimating];
             }
