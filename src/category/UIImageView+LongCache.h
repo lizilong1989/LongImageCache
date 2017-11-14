@@ -96,4 +96,14 @@
  */
 - (void)setImageWithName:(NSString*)aName;
 
+/*!
+ *  设置图片根据名称以及图片后缀
+ *
+ *  @param aName                图片名称
+ *  @param aPathComponent       图片后缀
+ *
+ */
+- (void)setImageWithName:(NSString*)aName
+           pathComponent:(NSString*)aPathComponent;
+
 @end

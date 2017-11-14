@@ -122,6 +122,16 @@ static LongPhotoBrowser *browser = nil;
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showAction)];
     [self.collectionView addGestureRecognizer:tap];
     
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(doubleTapAction:)];
+    doubleTap.numberOfTapsRequired = 2;
+    doubleTap.numberOfTouchesRequired = 1;
+    [self.collectionView addGestureRecognizer:doubleTap];
+    [tap requireGestureRecognizerToFail:doubleTap];
+    
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressAction:)];
+    longPress.minimumPressDuration = 1.0f;
+    [self.collectionView addGestureRecognizer:longPress];
+    
     [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:_index inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
     
     [self.view addSubview:self.titleView];
@@ -232,6 +242,44 @@ static LongPhotoBrowser *browser = nil;
 - (void)showAction
 {
     self.titleView.hidden = !self.titleView.hidden;
+}
+
+- (void)doubleTapAction:(UITapGestureRecognizer *)recognizer
+{
+    CGPoint location = [recognizer locationInView:self.collectionView];
+    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
+    LongCollectionViewCell *cell = (LongCollectionViewCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+    if (cell) {
+        if (cell.scrollView.zoomScale != 1.0f) {
+            [UIView animateWithDuration:0.2 animations:^{
+                [cell.scrollView setZoomScale:1.0];
+            }];
+        }
+    }
+}
+
+- (void)longPressAction:(UILongPressGestureRecognizer *)recognizer
+{
+    CGPoint location = [recognizer locationInView:self.collectionView];
+    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
+    LongCollectionViewCell *cell = (LongCollectionViewCell*)[self.collectionView cellForItemAtIndexPath:indexPath];
+    if (cell) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+        
+        UIAlertAction *saveAction = [UIAlertAction actionWithTitle:@"Save to Album"
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction * _Nonnull action) {
+                                                               UIImageWriteToSavedPhotosAlbum(cell.imageView.image, self, nil, nil);
+                                                           }];
+        
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:nil];
+        
+        [alertController addAction:saveAction];
+        [alertController addAction:cancelAction];
+        [self presentViewController:alertController animated:YES completion:nil];
+    }
 }
 
 @end

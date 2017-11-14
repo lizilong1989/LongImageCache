@@ -334,20 +334,23 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
         return;
     }
     
-    NSData *data = [[LongCache sharedInstance] getCacheWithKey:aName];
+    NSData *data = [self _getDataWithName:aName pathComponent:@"gif"];
     
-    if (data == nil) {
-        
-        data = [self _getDataWithName:aName pathComponent:@"gif"];
-        
-        if (data.length == 0) {
-            data = [self _getDataWithName:aName pathComponent:@"png"];
-        }
-
-        if (data.length > 0) {
-            [[LongCache sharedInstance] storeCacheWithData:data forKey:aName];
-        }
+    if (data.length == 0) {
+        data = [self _getDataWithName:aName pathComponent:@"png"];
     }
+    
+    [self _setImageWithImage:nil data:data];
+}
+
+- (void)setImageWithName:(NSString*)aName
+           pathComponent:(NSString*)aPathComponent
+{
+    if (aName.length == 0) {
+        return;
+    }
+    
+    NSData *data = [self _getDataWithName:aName pathComponent:aPathComponent];
     
     [self _setImageWithImage:nil data:data];
 }
