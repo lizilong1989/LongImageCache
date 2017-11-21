@@ -22,6 +22,8 @@ static const void *LongCacheindicatorViewKey = &LongCacheindicatorViewKey;
 static const void *LongCacheDisplayLinkViewKey = &LongCacheDisplayLinkViewKey;
 static const void *LongCacheTimeDurationKey = &LongCacheTimeDurationKey;
 static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
+static const void *LongCacheImageNamesKey = &LongCacheImageNamesKey;
+static const void *LongCacheRepeatCountKey = &LongCacheRepeatCountKey;
 
 @interface UIImageView (LongCachePrivate)
 
@@ -31,8 +33,12 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 @property (nonatomic, strong) NSString *urlKey;
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic, assign) CGImageSourceRef imageSourceRef;
+@property (nonatomic, strong) NSArray *names;
+@property (nonatomic, strong) NSNumber *repeatCount;
 
 - (void)long_playGif;
+
+- (void)long_playImage;
 
 @end
 
@@ -44,6 +50,8 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 @dynamic displayLink;
 @dynamic timeDuration;
 @dynamic imageSourceRef;
+@dynamic names;
+@dynamic repeatCount;
 
 + (void)load
 {
@@ -126,6 +134,26 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     return (__bridge CGImageSourceRef)(objc_getAssociatedObject(self, LongCacheImageSourceRefKey));
 }
 
+- (void)setNames:(NSArray *)names
+{
+    objc_setAssociatedObject(self, LongCacheImageNamesKey, names, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSArray*)names
+{
+    return objc_getAssociatedObject(self, LongCacheImageNamesKey);
+}
+
+- (void)setRepeatCount:(NSNumber *)repeatCount
+{
+    objc_setAssociatedObject(self, LongCacheRepeatCountKey, repeatCount, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSNumber*)repeatCount
+{
+    return objc_getAssociatedObject(self, LongCacheRepeatCountKey);
+}
+
 #pragma mark - gif
 
 - (void)long_playGif
@@ -182,16 +210,133 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     return frameDuration;
 }
 
+#pragma mark - play image
+
+- (void)long_playImage
+{
+    if ([self.names count] == 0) {
+        [self stopAnimating];
+        return;
+    }
+    
+    NSInteger repeatCount = self.repeatCount.integerValue;
+    if (self.repeatCount.integerValue == -1) {
+        [self setRepeatCount:@(0)];
+        [self stopAnimating];
+        return;
+    }
+    
+    NSInteger index = self.longIndex.integerValue;
+    if (index >= [self.names count]) {
+        index = 0;
+        if (self.animationRepeatCount != 0) {
+            [self setRepeatCount:@(--repeatCount)];
+        }
+    }
+    
+    NSTimeInterval time = [self.timeDuration doubleValue];
+    time += self.displayLink.duration;
+    if (time <= self.animationDuration) {
+        self.timeDuration = @(time);
+        return;
+    }
+    self.timeDuration = 0;
+    
+    NSString *name = [self.names objectAtIndex:index];
+    [self setImageWithName:name];
+    [self setLongIndex:@(++index)];
+}
+
+#pragma mark - private
+
+- (void)_setImageWithData:(NSData*)aData
+{
+    UIImage *image = [UIImage imageWithData:aData];
+    [self _setImageWithImage:image];
+}
+
+- (void)_setImageWithImage:(UIImage*)aImage
+{
+    self.image = aImage;
+    [self.layer setNeedsDisplay];
+}
+
+- (NSData*)_getDataWithName:(NSString*)aName pathComponent:(NSString*)aPathComponent
+{
+    NSData *data = nil;
+    CGFloat scale = [UIScreen mainScreen].scale;
+    NSArray *scales;
+    if (scale <= 1.0f) {
+        scales = @[@"",@"@2x",@"@3x"];
+    } else if (scale <= 2.0f){
+        scales = @[@"@2x",@"@3x",@""];
+    } else {
+        scales = @[@"@3x",@"@2x",@""];
+    }
+    
+    for(NSString *scale in scales) {
+        NSString *retinaPath = [[NSBundle mainBundle] pathForResource:[aName stringByAppendingString:scale] ofType:aPathComponent];
+        data = [NSData dataWithContentsOfFile:retinaPath];
+        if (data.length > 0) {
+            break;
+        }
+    }
+    return data;
+}
+
+- (void)_addNotification
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(long_appDidEnterBackgroundNotif:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(long_appWillEnterForeground:)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+}
+
+- (void)_removeNotification
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIApplicationDidEnterBackgroundNotification
+                                                  object:nil];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIApplicationWillEnterForegroundNotification
+                                                  object:nil];
+}
+
+- (void)long_appDidEnterBackgroundNotif:(NSNotification*)notif
+{
+    [self stopAnimating];
+}
+
+- (void)long_appWillEnterForeground:(NSNotification*)notif
+{
+    [self startAnimating];
+}
+
 #pragma mark - swizzle
 
 - (void)long_startAnimating
 {
-    BOOL ret = self.imageSourceRef != nil;
-    
-    if (ret) {
+    [self _addNotification];
+    if (self.imageSourceRef != nil) {
         if (!self.displayLink) {
             self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(long_playGif)];
             [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        }
+        self.displayLink.paused = NO;
+    } if ([self.names count] > 0) {
+        if (!self.displayLink) {
+            self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(long_playImage)];
+            [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        }
+        if (self.animationRepeatCount != 0) {
+            self.repeatCount = @(self.animationRepeatCount - 1);
         }
         self.displayLink.paused = NO;
     } else {
@@ -201,9 +346,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 
 - (void)long_stopAnimating
 {
-    BOOL ret = self.displayLink != nil;
-    
-    if (ret) {
+    if (self.displayLink != nil) {
         self.displayLink.paused = YES;
         [self.displayLink invalidate];
         self.displayLink = nil;
@@ -227,6 +370,7 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 {
     [self stopAnimating];
     [self.displayLink invalidate];
+    [self _removeNotification];
 }
 
 #pragma mark - override
@@ -235,6 +379,18 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
 {
     layer.contents = (__bridge id)self.image.CGImage;
 }
+
+/*
+-(void)drawRect:(CGRect)rect
+{
+    [super drawRect:rect];
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    CGLayerRef cg = CGLayerCreateWithContext(ctx, self.frame.size, NULL);
+    CGContextRef layerContext = CGLayerGetContext(cg);
+    CGContextDrawImage(layerContext, self.frame, self.image.CGImage);
+    CGContextDrawLayerAtPoint(ctx, CGPointMake(0, 0), cg);
+}
+ */
 
 @end
 
@@ -334,25 +490,45 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
         return;
     }
     
-    NSData *data = [self _getDataWithName:aName pathComponent:@"gif"];
+    NSString *res = aName.stringByDeletingPathExtension;
+    NSString *ext = aName.pathExtension;
     
-    if (data.length == 0) {
-        data = [self _getDataWithName:aName pathComponent:@"png"];
-    }
+    NSData *data = nil;
+    UIImage *image = [[LongImageCache sharedInstance] getImageFromCacheWithKey:aName];
     
-    [self _setImageWithImage:nil data:data];
-}
-
-- (void)setImageWithName:(NSString*)aName
-           pathComponent:(NSString*)aPathComponent
-{
-    if (aName.length == 0) {
+    if (image) {
+        [self _setImageWithImage:image];
         return;
     }
     
-    NSData *data = [self _getDataWithName:aName pathComponent:aPathComponent];
+    if (ext.length > 0) {
+        data = [self _getDataWithName:res pathComponent:ext];
+    } else {
+        NSArray *exts =
+#ifdef LONG_WEBP
+        exts = @[@"png",@"jpg",@"jpeg",@"gif",@"webp",@""];
+#else
+        exts = @[@"png",@"jpg",@"jpeg",@"gif",@""];
+#endif
+        for (NSString *ext in exts) {
+            data = [self _getDataWithName:aName pathComponent:ext];
+            if (data.length > 0) {
+                [[LongImageCache sharedInstance] setCacheWithData:data key:aName toDisk:NO];
+                break;
+            }
+        }
+    }
     
-    [self _setImageWithImage:nil data:data];
+    [self _setImageWithData:data];
+}
+
+- (void)setImagesWithNames:(NSArray *)aNames
+{
+    self.names = aNames;
+    if ([aNames count] > 0) {
+        NSString *name = [self.names objectAtIndex:0];
+        [self setImageWithName:name];
+    }
 }
 
 #pragma mark - private
@@ -451,40 +627,6 @@ static const void *LongCacheImageSourceRefKey = &LongCacheImageSourceRefKey;
     } else {
         dispatch_sync(dispatch_get_main_queue(), block);
     }
-}
-
-- (void)_setImageWithData:(NSData*)aData
-{
-    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(aData), NULL);
-    NSInteger index = 0;
-    CGImageRef imageRef = CGImageSourceCreateImageAtIndex(imageSource, index, NULL);
-    self.layer.contents = (__bridge id)(imageRef);
-    CFRelease(imageRef);
-    CFRelease(imageSource);
-}
-
-- (void)_setImageWithImage:(UIImage*)aImage
-{
-    self.image = aImage;
-    [self.layer setNeedsDisplay];
-}
-
-- (NSData*)_getDataWithName:(NSString*)aName pathComponent:(NSString*)aPathComponent
-{
-    NSData *data = nil;
-    CGFloat scale = [UIScreen mainScreen].scale;
-    if (scale > 1.0f) {
-        NSString *retinaPath = [[NSBundle mainBundle] pathForResource:[aName stringByAppendingString:@"@2x"] ofType:aPathComponent];
-        data = [NSData dataWithContentsOfFile:retinaPath];
-        if (data.length == 0) {
-            NSString *path = [[NSBundle mainBundle] pathForResource:aName ofType:aPathComponent];
-            data = [NSData dataWithContentsOfFile:path];
-        }
-    } else {
-        NSString *path = [[NSBundle mainBundle] pathForResource:aName ofType:aPathComponent];
-        data = [NSData dataWithContentsOfFile:path];
-    }
-    return data;
 }
 
 @end
