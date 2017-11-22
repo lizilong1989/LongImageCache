@@ -52,7 +52,6 @@ static LongCache *instance = nil;
         _cacheQueue = dispatch_queue_create("com.longcache.queue", DISPATCH_QUEUE_SERIAL);
         dispatch_set_target_queue(_cacheQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
         _diskCachePath = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),kDefaultLongCachePath];
-        
     }
     return self;
 }
@@ -95,6 +94,10 @@ static LongCache *instance = nil;
         if (count >= kDefaultMaxCacheSize) {
             const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
             CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
+            CFDataRef dataRef = CFDictionaryGetValue(_dicRef, key);
+            if (dataRef) {
+                CFRelease(dataRef);
+            }
             CFDictionaryRemoveValue(_dicRef, key);
         }
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)aKey);
@@ -146,6 +149,10 @@ static LongCache *instance = nil;
     [self _removeWithKey:aKey];
     if (aToDisk) {
         [self _removeCacheFromDiskWithKey:md5Key];
+    }
+    CFDataRef dataRef = CFDictionaryGetValue(_dicRef, (__bridge const void *)aKey);
+    if (dataRef) {
+        CFRelease(dataRef);
     }
     CFDictionaryRemoveValue(_dicRef, (__bridge const void *)aKey);
     pthread_mutex_unlock(&_mutex);
@@ -252,6 +259,10 @@ static LongCache *instance = nil;
             if (count >= kDefaultMaxCacheSize) {
                 const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
                 CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
+                CFDataRef dataRef = CFDictionaryGetValue(_dicRef, key);
+                if (dataRef) {
+                    CFRelease(dataRef);
+                }
                 CFDictionaryRemoveValue(_dicRef, key);
             }
             CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
