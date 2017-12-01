@@ -243,7 +243,15 @@ static const void *LongCacheRepeatCountKey = &LongCacheRepeatCountKey;
     self.timeDuration = 0;
     
     NSString *name = [self.names objectAtIndex:index];
-    [self setImageWithName:name];
+    NSData *data = [self _getDataWithName:name];
+    if (data.length > 0) {
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)(data), NULL);
+        CGImageRef imageRef = CGImageSourceCreateImageAtIndex(imageSource, 0, NULL);
+        self.image = [UIImage imageWithCGImage:imageRef];
+        [self.layer setNeedsDisplay];
+        CFRelease(imageRef);
+        CFRelease(imageSource);
+    }
     [self setLongIndex:@(++index)];
 }
 
@@ -259,6 +267,36 @@ static const void *LongCacheRepeatCountKey = &LongCacheRepeatCountKey;
 {
     self.image = aImage;
     [self.layer setNeedsDisplay];
+}
+
+- (NSData*)_getDataWithName:(NSString*)aName
+{
+    NSData *data;
+    
+    if (aName.length == 0) {
+        return data;
+    }
+    
+    NSString *res = aName.stringByDeletingPathExtension;
+    NSString *ext = aName.pathExtension;
+    if (ext.length > 0) {
+        data = [self _getDataWithName:res pathComponent:ext];
+    } else {
+        NSArray *exts =
+#ifdef LONG_WEBP
+        exts = @[@"png",@"jpg",@"jpeg",@"gif",@"webp",@""];
+#else
+        exts = @[@"png",@"jpg",@"jpeg",@"gif",@""];
+#endif
+        for (NSString *ext in exts) {
+            data = [self _getDataWithName:aName pathComponent:ext];
+            if (data.length > 0) {
+                break;
+            }
+        }
+    }
+    
+    return data;
 }
 
 - (NSData*)_getDataWithName:(NSString*)aName pathComponent:(NSString*)aPathComponent
@@ -490,34 +528,9 @@ static const void *LongCacheRepeatCountKey = &LongCacheRepeatCountKey;
         return;
     }
     
-    NSString *res = aName.stringByDeletingPathExtension;
-    NSString *ext = aName.pathExtension;
-    
     NSData *data = nil;
-    UIImage *image = [[LongImageCache sharedInstance] getImageFromCacheWithKey:aName];
-    
-    if (image) {
-        [self _setImageWithImage:image];
-        return;
-    }
-    
-    if (ext.length > 0) {
-        data = [self _getDataWithName:res pathComponent:ext];
-    } else {
-        NSArray *exts =
-#ifdef LONG_WEBP
-        exts = @[@"png",@"jpg",@"jpeg",@"gif",@"webp",@""];
-#else
-        exts = @[@"png",@"jpg",@"jpeg",@"gif",@""];
-#endif
-        for (NSString *ext in exts) {
-            data = [self _getDataWithName:aName pathComponent:ext];
-            if (data.length > 0) {
-                [[LongImageCache sharedInstance] setCacheWithData:data key:aName toDisk:NO];
-                break;
-            }
-        }
-    }
+
+    data = [self _getDataWithName:aName];
     
     [self _setImageWithData:data];
 }

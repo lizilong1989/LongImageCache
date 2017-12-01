@@ -11,6 +11,7 @@
 #import "LongCache.h"
 
 #import "TableViewController.h"
+#import "ImageViewController.h"
 
 @interface AppDelegate ()
 {
@@ -28,6 +29,7 @@
 
     /*
     _nscache = [[NSCache alloc] init];
+    NSMapTable *map = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsStrongMemory];
     BOOL type = YES;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         for (int j = 0; j < 5; j ++) {
@@ -40,7 +42,8 @@
                                                                 forKey:[NSString stringWithFormat:@"%d",i]
                                                                 toDisk:YES];
                     } else {
-                        [_nscache setObject:date forKey:[NSString stringWithFormat:@"%d",i]];
+                        [map setObject:date forKey:[NSString stringWithFormat:@"%d",i]];
+//                        [_nscache setObject:date forKey:[NSString stringWithFormat:@"%d",i]];
                     }
                 }
             
@@ -57,7 +60,8 @@
                     if (type) {
                         date = (NSData*)[[LongCache sharedInstance] getCacheWithKey:[NSString stringWithFormat:@"%d",i]];
                     } else {
-                        date = (NSData*)[_nscache objectForKey:[NSString stringWithFormat:@"%d",i]];
+//                        date = (NSData*)[_nscache objectForKey:[NSString stringWithFormat:@"%d",i]];
+                        date = (NSData*)[map objectForKey:[NSString stringWithFormat:@"%d",i]];
                     }
                     if ([date isKindOfClass:[NSData class]]) {
                         NSLog(@"%@",[[NSString alloc] initWithData:date encoding:NSUTF8StringEncoding]);
@@ -67,8 +71,10 @@
                             if (type) {
                                 NSLog(@"size %ld", [[LongCache sharedInstance] getSize]);
                                 NSLog(@"count %ld", [[LongCache sharedInstance] getDiskCount]);
+                                [[LongCache sharedInstance] clearAllCache];
                             } else {
-                                [_nscache removeAllObjects];
+//                                [_nscache removeAllObjects];
+                                [map removeAllObjects];
                             }
                         }
                     }
@@ -78,7 +84,18 @@
     });*/
     
     TableViewController *table = [[TableViewController alloc] init];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:table];
+    table.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Load Image"
+                                                     image:nil
+                                             selectedImage:nil];
+    ImageViewController *image = [[ImageViewController alloc] init];
+    image.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"Play Image"
+                                                     image:nil
+                                             selectedImage:nil];
+    
+    UITabBarController *tabBar = [[UITabBarController alloc] init];
+    [tabBar setViewControllers:@[table,image]];
+
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:tabBar];
     self.window.rootViewController = nav;
     [self.window makeKeyAndVisible];
     
