@@ -16,6 +16,13 @@
 + (instancetype)sharedInstance;
 
 /*!
+ *  设置缓存容量
+ *
+ *  @param aFileSize    缓存容量（单位KB）
+ */
+- (void)setCacheMaxFileSize:(NSInteger)aFileSize;
+
+/*!
  *  缓存数据
  *
  *  @param aData    缓存数据

@@ -6,7 +6,9 @@
 //  Copyright © 2017年 zilong.li. All rights reserved.
 //
 
-#define kDefaultMaxCacheSize 256
+#define kDefaultMaxCacheSize 256 * 256
+
+#define kDefaultMaxCacheDataSize 1024 * 1024 * 128
 
 #import "LongCache.h"
 
@@ -25,6 +27,8 @@
     dispatch_queue_t _cacheQueue;
     
     NSString *_diskCachePath;
+    NSUInteger _totalSize; //实际cache文件大小
+    NSUInteger _maxTotalSize; //cache限制的文件大小
 }
 
 @end
@@ -52,6 +56,7 @@ static LongCache *instance = nil;
         _cacheQueue = dispatch_queue_create("com.longcache.queue", DISPATCH_QUEUE_SERIAL);
         dispatch_set_target_queue(_cacheQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
         _diskCachePath = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),kDefaultLongCachePath];
+        _maxTotalSize = kDefaultMaxCacheDataSize;
     }
     return self;
 }
@@ -65,6 +70,11 @@ static LongCache *instance = nil;
     dispatch_release(_cacheQueue);
     _cacheQueue = nil;
 #endif
+}
+
+- (void)setCacheMaxFileSize:(NSInteger)aFileSize
+{
+    _maxTotalSize = aFileSize;
 }
 
 #pragma mark - public
@@ -82,28 +92,32 @@ static LongCache *instance = nil;
     }
     
     pthread_mutex_lock(&_mutex);
-    
-    NSString *md5Key = [aKey md5String];
-    
     if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)aKey)) {
-        [self _removeWithKey:md5Key];
+        /*
+        [self _removeWithKey:aKey];
+        [self _removeDataWithKey:aKey];
+        _totalSize += aData.length;
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)aKey);
         CFDictionarySetValue(_dicRef, (__bridge const void *)aKey, CFDataCreate(0, aData.bytes, aData.length));
+         */
     } else {
-        CFIndex count = CFArrayGetCount(_arrayRef);
-        if (count >= kDefaultMaxCacheSize) {
-            const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
-            CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
-            CFDataRef dataRef = CFDictionaryGetValue(_dicRef, key);
-            if (dataRef) {
-                CFRelease(dataRef);
+        BOOL overflow = _totalSize > _maxTotalSize;
+        do {
+            CFIndex count = CFArrayGetCount(_arrayRef);
+            if (count >= kDefaultMaxCacheSize || overflow) {
+                const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
+                CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
+                [self _removeDataWithKey:(__bridge NSString *)(key)];
             }
-            CFDictionaryRemoveValue(_dicRef, key);
-        }
+            overflow = _totalSize > _maxTotalSize;
+        } while(overflow);
+        
+        _totalSize += aData.length;
         CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)aKey);
         CFDictionarySetValue(_dicRef, (__bridge const void *)aKey,CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
+        NSString *md5Key = [aKey md5String];
         [self _saveCacheFromDiskWithData:aData forKey:md5Key];
     }
     pthread_mutex_unlock(&_mutex);
@@ -150,11 +164,7 @@ static LongCache *instance = nil;
     if (aToDisk) {
         [self _removeCacheFromDiskWithKey:md5Key];
     }
-    CFDataRef dataRef = CFDictionaryGetValue(_dicRef, (__bridge const void *)aKey);
-    if (dataRef) {
-        CFRelease(dataRef);
-    }
-    CFDictionaryRemoveValue(_dicRef, (__bridge const void *)aKey);
+    [self _removeDataWithKey:aKey];
     pthread_mutex_unlock(&_mutex);
 }
 
@@ -167,6 +177,7 @@ static LongCache *instance = nil;
     if ([fileManager fileExistsAtPath:_diskCachePath]) {
         [fileManager removeItemAtPath:_diskCachePath error:nil];
     }
+    _totalSize = 0;
     pthread_mutex_unlock(&_mutex);
 }
 
@@ -203,6 +214,16 @@ static LongCache *instance = nil;
     CFIndex count = CFArrayGetCount(_arrayRef);
     CFIndex index = CFArrayGetCountOfValue(_arrayRef, CFRangeMake(0, count - 1), (__bridge const void *)(aKey));
     CFArrayRemoveValueAtIndex(_arrayRef, index);
+}
+
+- (void)_removeDataWithKey:(NSString*)aKey
+{
+    CFDataRef dataRef = CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
+    if (dataRef) {
+        _totalSize -= CFDataGetLength(dataRef);
+        CFRelease(dataRef);
+    }
+    CFDictionaryRemoveValue(_dicRef, (__bridge const void *)(aKey));
 }
 
 - (void)_saveCacheFromDiskWithData:(NSData *)aData forKey:(NSString*)aKey
@@ -255,16 +276,18 @@ static LongCache *instance = nil;
     if ([fileManager fileExistsAtPath:path]) {
         ret = [NSData dataWithContentsOfFile:path];
         if (ret) {
-            CFIndex count = CFArrayGetCount(_arrayRef);
-            if (count >= kDefaultMaxCacheSize) {
-                const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
-                CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
-                CFDataRef dataRef = CFDictionaryGetValue(_dicRef, key);
-                if (dataRef) {
-                    CFRelease(dataRef);
+            BOOL overflow = _totalSize > _maxTotalSize;
+            do {
+                CFIndex count = CFArrayGetCount(_arrayRef);
+                if (count >= kDefaultMaxCacheSize || overflow) {
+                    const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
+                    CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
+                    [self _removeDataWithKey:(__bridge NSString *)(key)];
                 }
-                CFDictionaryRemoveValue(_dicRef, key);
-            }
+                overflow = _totalSize > _maxTotalSize;
+            } while(overflow);
+            
+            _totalSize += ret.length;
             CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
             CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, ret.bytes, ret.length));
         }
