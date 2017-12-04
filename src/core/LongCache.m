@@ -117,7 +117,7 @@ static LongCache *instance = nil;
         CFDictionarySetValue(_dicRef, (__bridge const void *)aKey,CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
-        NSString *md5Key = [aKey md5String];
+        NSString *md5Key = [aKey md5String]; //这是一个较为耗时的操作
         [self _saveCacheFromDiskWithData:aData forKey:md5Key];
     }
     pthread_mutex_unlock(&_mutex);
@@ -139,12 +139,11 @@ static LongCache *instance = nil;
     }
     pthread_mutex_lock(&_mutex);
     
-    NSString *md5Key = [aKey md5String];
-    
     if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)aKey)) {
         obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)aKey);
     }
     if (!obj) {
+        NSString *md5Key = [aKey md5String];
         obj = [self _getCacheFromDiskWithKey:md5Key];
     }
     pthread_mutex_unlock(&_mutex);
@@ -159,9 +158,9 @@ static LongCache *instance = nil;
 - (void)clearCacheWithKey:(NSString *)aKey toDisk:(BOOL)aToDisk
 {
     pthread_mutex_lock(&_mutex);
-    NSString *md5Key = [aKey md5String];
     [self _removeWithKey:aKey];
     if (aToDisk) {
+        NSString *md5Key = [aKey md5String];
         [self _removeCacheFromDiskWithKey:md5Key];
     }
     [self _removeDataWithKey:aKey];
