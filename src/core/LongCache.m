@@ -25,6 +25,7 @@
     pthread_mutex_t _mutex;
     
     dispatch_queue_t _cacheQueue;
+    dispatch_queue_t _cacheQueues[10];
     
     NSString *_diskCachePath;
     NSUInteger _totalSize; //实际cache文件大小
@@ -54,6 +55,12 @@ static LongCache *instance = nil;
         _dicRef = CFDictionaryCreateMutable(0, kDefaultMaxCacheSize, NULL, NULL);
         pthread_mutex_init(&_mutex, NULL);
         _cacheQueue = dispatch_queue_create("com.longcache.queue", DISPATCH_QUEUE_SERIAL);
+        
+        for (int i = 0; i < 10; i ++) {
+            NSString *name = [NSString stringWithFormat:@"com.longcache.queue.%d",i];
+            _cacheQueues[i] = dispatch_queue_create([name UTF8String], DISPATCH_QUEUE_SERIAL);
+        }
+        
         dispatch_set_target_queue(_cacheQueue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
         _diskCachePath = [NSString stringWithFormat:@"%@%@",NSHomeDirectory(),kDefaultLongCachePath];
         _maxTotalSize = kDefaultMaxCacheDataSize;
@@ -117,8 +124,7 @@ static LongCache *instance = nil;
         CFDictionarySetValue(_dicRef, (__bridge const void *)aKey,CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
-        NSString *md5Key = [aKey md5String]; //这是一个较为耗时的操作
-        [self _saveCacheFromDiskWithData:aData forKey:md5Key];
+        [self _saveCacheFromDiskWithData:aData forKey:aKey];
     }
     pthread_mutex_unlock(&_mutex);
 }
@@ -138,7 +144,6 @@ static LongCache *instance = nil;
         return obj;
     }
     pthread_mutex_lock(&_mutex);
-    
     if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)aKey)) {
         obj = (__bridge NSData*)CFDictionaryGetValue(_dicRef, (__bridge const void *)aKey);
     }
@@ -160,8 +165,7 @@ static LongCache *instance = nil;
     pthread_mutex_lock(&_mutex);
     [self _removeWithKey:aKey];
     if (aToDisk) {
-        NSString *md5Key = [aKey md5String];
-        [self _removeCacheFromDiskWithKey:md5Key];
+        [self _removeCacheFromDiskWithKey:aKey];
     }
     [self _removeDataWithKey:aKey];
     pthread_mutex_unlock(&_mutex);
@@ -191,7 +195,7 @@ static LongCache *instance = nil;
     return count;
 }
 
-- (NSUInteger)getSize
+- (NSUInteger)getDiskSize
 {
     __block NSUInteger size = 0;
     NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -217,6 +221,9 @@ static LongCache *instance = nil;
 
 - (void)_removeDataWithKey:(NSString*)aKey
 {
+    if (aKey == nil || aKey.length == 0) {
+        return;
+    }
     CFDataRef dataRef = CFDictionaryGetValue(_dicRef, (__bridge const void *)(aKey));
     if (dataRef) {
         _totalSize -= CFDataGetLength(dataRef);
@@ -235,7 +242,10 @@ static LongCache *instance = nil;
         return;
     }
     
-    dispatch_async(_cacheQueue, ^{
+    NSInteger threadCount = [aKey hash] % 10;
+    
+    dispatch_async(_cacheQueues[threadCount], ^{
+        NSString *md5Key = [aKey md5String]; //这是一个较为耗时的操作
         NSFileManager *fileManager = [NSFileManager defaultManager];
         if (![fileManager fileExistsAtPath:_diskCachePath]) {
             [fileManager createDirectoryAtPath:_diskCachePath
@@ -243,7 +253,7 @@ static LongCache *instance = nil;
                                     attributes:nil
                                          error:nil];
         }
-        [aData writeToFile:[_diskCachePath stringByAppendingString:[self _cacheNameWithKey:aKey]]
+        [aData writeToFile:[_diskCachePath stringByAppendingString:[self _cacheNameWithKey:md5Key]]
                 atomically:NO];
     });
 }
@@ -254,8 +264,11 @@ static LongCache *instance = nil;
         return;
     }
     
-    dispatch_async(_cacheQueue, ^{
-        NSString *path = [NSString stringWithFormat:@"%@%@",_diskCachePath ,[self _cacheNameWithKey:aKey]];
+    NSInteger threadCount = [aKey hash] % 10;
+    
+    dispatch_async(_cacheQueues[threadCount], ^{
+        NSString *md5Key = [aKey md5String]; //这是一个较为耗时的操作
+        NSString *path = [NSString stringWithFormat:@"%@%@",_diskCachePath ,[self _cacheNameWithKey:md5Key]];
         NSFileManager *fileManager = [NSFileManager defaultManager];
         if ([fileManager fileExistsAtPath:path]) {
             [fileManager removeItemAtPath:path error:nil];

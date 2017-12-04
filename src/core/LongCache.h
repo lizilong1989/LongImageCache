@@ -86,6 +86,6 @@
  *
  *  @result 缓存数据大小
  */
-- (NSUInteger)getSize;
+- (NSUInteger)getDiskSize;
 
 @end
