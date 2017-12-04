@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = 'LongImageCache'
-  spec.version      = '1.0.4'
+  spec.version      = '1.0.5'
   spec.license       = { :type => 'Personal', :text => 'zilong.li' }
   spec.summary      = 'An Objective-C tool for Cache'
   spec.homepage     = 'https://github.com/lizilong1989/LongImageCache'
