@@ -13,7 +13,7 @@ pod 'LongImageCache'
 ## 使用方法
 
 
-图片缓存使用方法
+#### 图片缓存使用方法
 
 ```
 //首先引入header
@@ -25,13 +25,28 @@ NSString *url = @"http://127.0.0.1/test.jpg";
 
 ```
 
-图片浏览使用方法
+#### 图片浏览使用方法
 
 ```
 #import "LongPhotoBrowser.h"
 
 //进图图片浏览
 [[LongPhotoBrowser sharedInstance] showWithUrls:@[@"http://127.0.0.1/test.jpg"] withIndex:0];
+```
+
+#### 播放本地图片
+
+```
+//首先引入header
+#import "UIImageView+LongCache.h"
+
+UIImageView *imageView = [[UIImageView alloc] init];
+//设置图片文件数组
+[imageView setImagesWithNames:@[@"xxx1.png",@"xxx2.png",@"xxx3.png"]];
+//这是播放间隔，这里用displaylink实现，所以不能小于1/60
+imageView.animationDuration = 1/24;
+//播放图片
+[imageView startAnimating];
 ```
 
 ## 运行Demo
@@ -71,6 +86,11 @@ pod install
 
 
 ## Relase Note
+
+### v1.0.5
+
+* 优化缓存set和get性能以及写入本地的性能
+* 添加imageview可以设置多张图片并播放（非gif情况）
 
 ### v1.0.4
 
