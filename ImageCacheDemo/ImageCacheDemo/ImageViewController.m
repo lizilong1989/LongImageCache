@@ -73,22 +73,20 @@
             
         case UIGestureRecognizerStateChanged:
         {
-            NSLog(@"-----Current State: Changed-----");
             CGPoint currentPoint = [recognizer translationInView:self.view];
             if (currentPoint.x > self.panStartPoint.x) {
-                if (_index >= [_array count]) {
+                if (_index >= [_array count] || _index <= 0) {
                     _index = 0;
                 }
                 [_imageView setImageWithName:[_array objectAtIndex:_index]];
                 _index++;
             } else {
-                if (_index == 0) {
+                if (_index <= 0 || _index >= [_array count]) {
                     _index = [_array count] - 1;
                 }
                 [_imageView setImageWithName:[_array objectAtIndex:_index]];
                 _index--;
             }
-            NSLog(@"current point (%f, %f) in View", currentPoint.x, currentPoint.y);
         }
             break;
             

@@ -7,12 +7,14 @@ target 'ImageCacheDemo' do
     
     pod 'LongImageCache', :path => '../'
     
-#   pod 'LongImageCache/WebP', :path => '../'
+    pod 'LongImageCache/WebP', :path => '../'
 
-#	pod 'LongDispatch', :path => '../../LongDispatch'
+#    pod 'LongDispatch', :path => '../../LongDispatch'
     pod 'LongDispatch', :git => 'https://github.com/lizilong1989/LongDispatch.git'
 
-#	pod 'LongRequest', :path => '../../LongRequest'
+#    pod 'LongRequest', :path => '../../LongRequest'
     pod 'LongRequest', :git => 'https://github.com/lizilong1989/LongRequest.git'
 
+#    pod 'LongCrash', :path => '../../LongCrash'
+    pod 'LongCrash', :git => 'https://github.com/lizilong1989/LongCrash.git'
 end
