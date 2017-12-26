@@ -17,7 +17,7 @@
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 
-#define kLongDefaultSize 32
+#define kLongDefaultSize 256
 
 static LongImageCache *instance = nil;
 

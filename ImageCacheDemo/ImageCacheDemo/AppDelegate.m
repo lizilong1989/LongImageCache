@@ -30,13 +30,13 @@
     _nscache = [[NSCache alloc] init];
     _nscache.countLimit = 256 * 256;
     _nscache.totalCostLimit = 1024 * 1024 * 128;
-    BOOL type = NO;
+    BOOL type = YES;
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
         for (int j = 0; j < 5; j ++) {
-            for (int i = 0; i < 10000; i ++) {
+            for (int i = 0; i < 100000; i ++) {
                 
                 @autoreleasepool {
                     NSData *date = [[NSString stringWithFormat:@"%d",i] dataUsingEncoding:NSUTF8StringEncoding];
@@ -59,7 +59,7 @@
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
-        for (int i = 0; i < 10000; i ++) {
+        for (int i = 0; i < 100000; i ++) {
             @autoreleasepool {
                 NSData *date = nil;
                 if (type) {
@@ -101,7 +101,6 @@
     [self.window makeKeyAndVisible];
     
     [[LongCrashManager sharedInstancel] addDelegate:self delegateQueue:nil];
-    
     return YES;
 }
 

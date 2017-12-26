@@ -12,6 +12,7 @@
 
 #import "LongCache.h"
 
+#import "LongNode.h"
 #import "NSString+LongMD5.h"
 
 #import <pthread.h>
@@ -20,7 +21,7 @@
 
 @interface LongCache ()
 {
-    CFMutableArrayRef _arrayRef;
+    LongNodeList *_nodeList;
     CFMutableDictionaryRef _dicRef;
     pthread_mutex_t _mutex;
     
@@ -51,7 +52,6 @@ static LongCache *instance = nil;
 {
     self = [super init];
     if (self) {
-        _arrayRef = CFArrayCreateMutable(0, kDefaultMaxCacheSize, NULL);
         _dicRef = CFDictionaryCreateMutable(0, kDefaultMaxCacheSize, NULL, NULL);
         pthread_mutex_init(&_mutex, NULL);
         _cacheQueue = dispatch_queue_create("com.longcache.queue", DISPATCH_QUEUE_SERIAL);
@@ -70,7 +70,6 @@ static LongCache *instance = nil;
 
 - (void)dealloc
 {
-    CFRelease(_arrayRef);
     CFRelease(_dicRef);
     pthread_mutex_destroy(&_mutex);
 #if !OS_OBJECT_USE_OBJC
@@ -100,27 +99,19 @@ static LongCache *instance = nil;
     
     pthread_mutex_lock(&_mutex);
     if (CFDictionaryContainsKey(_dicRef, (__bridge const void *)aKey)) {
-        /*
-        [self _removeWithKey:aKey];
-        [self _removeDataWithKey:aKey];
-        _totalSize += aData.length;
-        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)aKey);
-        CFDictionarySetValue(_dicRef, (__bridge const void *)aKey, CFDataCreate(0, aData.bytes, aData.length));
-         */
     } else {
         BOOL overflow = _totalSize > _maxTotalSize;
         do {
-            CFIndex count = CFArrayGetCount(_arrayRef);
+            CFIndex count = [_nodeList count];
             if (count >= kDefaultMaxCacheSize || overflow) {
-                const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
-                CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
-                [self _removeDataWithKey:(__bridge NSString *)(key)];
+                [_nodeList removeNodeWithKey:aKey];
+                [self _removeDataWithKey:aKey];
             }
             overflow = _totalSize > _maxTotalSize;
         } while(overflow);
         
         _totalSize += aData.length;
-        CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)aKey);
+        [self _insertNodeWithKey:aKey];
         CFDictionarySetValue(_dicRef, (__bridge const void *)aKey,CFDataCreate(0, aData.bytes, aData.length));
     }
     if (aToDisk) {
@@ -163,18 +154,18 @@ static LongCache *instance = nil;
 - (void)clearCacheWithKey:(NSString *)aKey toDisk:(BOOL)aToDisk
 {
     pthread_mutex_lock(&_mutex);
-    [self _removeWithKey:aKey];
     if (aToDisk) {
         [self _removeCacheFromDiskWithKey:aKey];
     }
     [self _removeDataWithKey:aKey];
+    [_nodeList removeNodeWithKey:aKey];
     pthread_mutex_unlock(&_mutex);
 }
 
 - (void)clearAllCache
 {
     pthread_mutex_lock(&_mutex);
-    CFArrayRemoveAllValues(_arrayRef);
+    [_nodeList removeAllObjects];
     CFDictionaryRemoveAllValues(_dicRef);
     NSFileManager *fileManager = [NSFileManager defaultManager];
     if ([fileManager fileExistsAtPath:_diskCachePath]) {
@@ -211,13 +202,6 @@ static LongCache *instance = nil;
 }
 
 #pragma mark - private
-
-- (void)_removeWithKey:(NSString*)aKey
-{
-    CFIndex count = CFArrayGetCount(_arrayRef);
-    CFIndex index = CFArrayGetCountOfValue(_arrayRef, CFRangeMake(0, count - 1), (__bridge const void *)(aKey));
-    CFArrayRemoveValueAtIndex(_arrayRef, index);
-}
 
 - (void)_removeDataWithKey:(NSString*)aKey
 {
@@ -290,17 +274,16 @@ static LongCache *instance = nil;
         if (ret) {
             BOOL overflow = _totalSize > _maxTotalSize;
             do {
-                CFIndex count = CFArrayGetCount(_arrayRef);
+                CFIndex count = [_nodeList count];
                 if (count >= kDefaultMaxCacheSize || overflow) {
-                    const void *key = CFArrayGetValueAtIndex(_arrayRef, count - 1);
-                    CFArrayRemoveValueAtIndex(_arrayRef, count - 1);
-                    [self _removeDataWithKey:(__bridge NSString *)(key)];
+                    [_nodeList removeNodeWithKey:aKey];
+                    [self _removeDataWithKey:aKey];
                 }
                 overflow = _totalSize > _maxTotalSize;
             } while(overflow);
             
             _totalSize += ret.length;
-            CFArrayInsertValueAtIndex(_arrayRef, 0, (__bridge const void *)(aKey));
+            [self _insertNodeWithKey:aKey];
             CFDictionarySetValue(_dicRef, (__bridge const void *)(aKey), CFDataCreate(0, ret.bytes, ret.length));
         }
     }
@@ -310,6 +293,19 @@ static LongCache *instance = nil;
 - (NSString*)_cacheNameWithKey:(NSString*)aKey
 {
     return [NSString stringWithFormat:@"/%@_longcache",aKey];
+}
+
+- (void)_insertNodeWithKey:(NSString*)aKey
+{
+    if (_nodeList == nil) {
+        LongNode *node = [[LongNode alloc] init];
+        node.key = aKey;
+        _nodeList = [[LongNodeList alloc] initWithNode:node];
+    } else {
+        LongNode *node = [[LongNode alloc] init];
+        node.key = aKey;
+        [_nodeList insertNode:node];
+    }
 }
 
 @end

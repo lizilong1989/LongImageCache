@@ -34,10 +34,22 @@
 - (void)insertNode:(LongNode *)aNode
 {
     if (![_nodeDic objectForKey:aNode.key]) {
-        [_nodeDic setObject:aNode forKey:aNode.key];
-        _tail.next = aNode;
-        aNode.pre = _tail;
-        _tail = aNode;
+        if (_head == nil) {
+            _head = aNode;
+            _tail = aNode;
+        } else {
+            [_nodeDic setObject:aNode forKey:aNode.key];
+            _tail.next = aNode;
+            aNode.pre = _tail;
+            _tail = aNode;
+        }
+    } else {
+        LongNode *node = [_nodeDic objectForKey:aNode.key];
+        node.pre.next = node.next;
+        node.next.pre = node.pre;
+        node.next = _head.next;
+        node.pre = nil;
+        _head = node;
     }
 }
 
@@ -57,6 +69,16 @@
             temp.pre = node.pre;
         }
     }
+}
+
+- (NSInteger)count
+{
+    return [_nodeDic count];
+}
+
+- (void)removeAllObjects
+{
+    [_nodeDic removeAllObjects];
 }
 
 @end

@@ -25,6 +25,10 @@
 
 - (void)insertNode:(LongNode*)aNode;
 
-- (void)removeNodeWithKey:(NSString *)aKey
+- (void)removeNodeWithKey:(NSString *)aKey;
+
+- (NSInteger)count;
+
+- (void)removeAllObjects;
 
 @end
